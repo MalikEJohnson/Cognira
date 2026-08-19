@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "selftest": "tsx src/selftest.ts",
     "ingest": "tsx src/ingest-cli.ts",
-    "seed:demo": "tsx src/seed-demo.ts"
+    "seed:demo": "tsx src/seed-demo.ts",
+    "messages": "tsx src/messages-cli.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1",

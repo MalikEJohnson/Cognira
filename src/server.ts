@@ -11,6 +11,7 @@ import {
   type ChatTurn,
 } from "./ask.js";
 import { documentCount, listDecisions, saveDocumentWithDecisions } from "./store.js";
+import { ContactError, saveContactMessage } from "./db.js";
 import {
   AuthError,
   createChallenge,
@@ -355,6 +356,38 @@ app.post("/api/ask", async (req, res) => {
   } catch (err) {
     console.error("[/api/ask]", err);
     res.status(500).json({ error: describeApiError(err) });
+  }
+});
+
+// ------------------------------------------------------------------- contact
+
+app.post("/api/contact", (req, res) => {
+  const { name, email, message } = req.body ?? {};
+
+  if (typeof name !== "string" || typeof email !== "string" || typeof message !== "string") {
+    res.status(400).json({ error: "Please fill in every field." });
+    return;
+  }
+
+  try {
+    const user = currentUser(req);
+
+    saveContactMessage({
+      name,
+      email,
+      message,
+      wallet: user?.wallet ?? null,
+      client: demoClientKey(req.ip, req.get("user-agent")),
+    });
+
+    res.json({ ok: true });
+  } catch (err) {
+    if (err instanceof ContactError) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    console.error("[/api/contact]", err);
+    res.status(500).json({ error: "Could not send that message. Try again shortly." });
   }
 });
 

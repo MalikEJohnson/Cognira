@@ -837,20 +837,217 @@
             margin: 14px 0 0;
         }
 
+        /* ----------------------------------------------------------- code */
+
+        .code {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            overflow: hidden;
+            margin: 0;
+        }
+
+        .code-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            font-family: var(--mono);
+            font-size: 11.5px;
+            color: var(--faint);
+            letter-spacing: 0.04em;
+        }
+
+        .code-head a {
+            color: var(--accent-soft);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .code-head a:hover { text-decoration: underline; }
+
+        /* Wide code scrolls inside its own box; the page never moves sideways. */
+        .code pre {
+            margin: 0;
+            padding: 18px;
+            overflow-x: auto;
+            font-family: var(--mono);
+            font-size: 12.5px;
+            line-height: 1.7;
+            color: #d5d8e2;
+        }
+
+        .tok-c { color: #5f6474; font-style: italic; }
+        .tok-s { color: #86d0a0; }
+        .tok-k { color: #a68fff; }
+        .tok-n { color: #ffc46b; }
+
+        .codeblock {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .codeblock > p {
+            margin: 0;
+            color: var(--muted);
+            max-width: 68ch;
+        }
+
+        .gh {
+            border: 1px solid var(--border-strong);
+        }
+
+        .gh-cta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding: 26px;
+            border: 1px solid var(--accent-dim);
+            border-radius: var(--radius);
+            background: linear-gradient(180deg, #12102180, var(--surface) 60%);
+        }
+
+        .gh-cta h3 { margin-bottom: 6px; }
+        .gh-cta p { margin: 0; color: var(--muted); max-width: 60ch; }
+
+        .gh-cta a {
+            text-decoration: none;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+            font-size: 15px;
+            padding: 13px 20px;
+            border-radius: 10px;
+            white-space: nowrap;
+        }
+
+        .gh-cta a:hover { filter: brightness(1.1); }
+
+        /* ----------------------------------------------------- icon links */
+
+        .icon-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            border: 1px solid var(--border-strong);
+            color: var(--muted);
+            transition: color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .icon-link:hover {
+            color: var(--text);
+            border-color: var(--faint);
+        }
+
+        /* Until a URL is filled in, the icon is visibly not yet a link. */
+        .icon-link[aria-disabled="true"] {
+            opacity: 0.45;
+            cursor: default;
+        }
+
+        .icon-link[aria-disabled="true"]:hover {
+            color: var(--muted);
+            border-color: var(--border-strong);
+        }
+
         /* --------------------------------------------------------- footer */
 
         footer {
             border-top: 1px solid var(--border);
-            padding: 28px 0;
-            color: var(--faint);
-            font-size: 13.5px;
+            margin-top: 40px;
+            padding: 48px 0 28px;
+            color: var(--muted);
+            font-size: 14px;
         }
 
-        footer .shell {
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr 1.6fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        .foot-brand .brand {
+            font-size: 19px;
+            margin-bottom: 12px;
+        }
+
+        .foot-brand p {
+            margin: 0 0 16px;
+            color: var(--faint);
+            max-width: 32ch;
+        }
+
+        .socials {
+            display: flex;
+            gap: 10px;
+        }
+
+        .foot-col h4 {
+            margin: 0 0 14px;
+            font-family: var(--mono);
+            font-size: 11.5px;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--faint);
+        }
+
+        .foot-col ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .foot-col a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+
+        .foot-col a:hover { color: var(--text); }
+
+        .contact-form input,
+        .contact-form textarea {
+            margin-bottom: 10px;
+            padding: 11px 13px;
+            font-size: 14px;
+        }
+
+        .contact-form textarea {
+            min-height: 92px;
+        }
+
+        .contact-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .foot-legal {
             display: flex;
             justify-content: space-between;
             gap: 16px;
             flex-wrap: wrap;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+            padding-top: 22px;
+            color: var(--faint);
+            font-size: 13px;
+        }
+
+        @media (max-width: 860px) {
+            .footer-grid { grid-template-columns: 1fr; gap: 32px; }
         }
 
         @media (max-width: 860px) {
@@ -884,11 +1081,41 @@
         <div class="tabs">
             <a class="tab" href="#/product"   data-route="product">Product</a>
             <a class="tab" href="#/workspace" data-route="workspace">Workspace</a>
-            <a class="tab" href="#/pricing"   data-route="pricing">Pricing</a>
+            <a class="tab" href="#/demo"      data-route="demo">Demo</a>
         </div>
 
         <div class="nav-right">
-            <span id="planPill" class="pill">Demo</span>
+            <a
+                class="icon-link"
+                data-link="github"
+                href="#"
+                target="_blank"
+                rel="noopener"
+                aria-label="Cognira on GitHub"
+                title="GitHub"
+            >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                    <path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.5 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.69 5.4-5.25 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/>
+                </svg>
+            </a>
+
+            <a
+                class="icon-link"
+                data-link="twitter"
+                href="#"
+                target="_blank"
+                rel="noopener"
+                aria-label="Cognira on Twitter"
+                title="Twitter"
+            >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                    <path d="M23 4.5a8.4 8.4 0 0 1-2.4.66A4.2 4.2 0 0 0 22.4 2.9a8.4 8.4 0 0 1-2.66 1.02A4.19 4.19 0 0 0 12.6 7.75a11.9 11.9 0 0 1-8.64-4.38 4.19 4.19 0 0 0 1.3 5.59A4.16 4.16 0 0 1 3.4 8.4v.05a4.19 4.19 0 0 0 3.36 4.11 4.2 4.2 0 0 1-1.89.07 4.19 4.19 0 0 0 3.91 2.91A8.4 8.4 0 0 1 2 17.27a11.86 11.86 0 0 0 6.42 1.88c7.7 0 11.92-6.38 11.92-11.91 0-.18 0-.36-.01-.54A8.5 8.5 0 0 0 23 4.5z"/>
+                </svg>
+            </a>
+
+            <!-- Only shown once there is something to say: days remaining. -->
+            <span id="planPill" class="pill" style="display:none;"></span>
+
             <button id="walletBtn" class="btn-ghost btn-sm" onclick="onWalletClick()">
                 Connect wallet
             </button>
@@ -981,18 +1208,12 @@
             </p>
         </div>
 
-        <!-- PRICING / DEMO — the whole strip links to the pricing tab -->
-        <div
-            class="panel tier-strip"
-            onclick="go('pricing')"
-            role="link"
-            tabindex="0"
-            onkeydown="if(event.key==='Enter'){go('pricing')}"
-        >
+        <!-- PRICING -->
+        <div class="panel tier-strip" id="pricing">
 
             <div class="panel-head" style="margin-bottom:0;">
                 <h3>Pricing</h3>
-                <span class="faint" style="font-size:13.5px;">
+                <span class="faint" style="font-size:13.5px;" id="pricingScope">
                     You are on the free demo
                 </span>
             </div>
@@ -1008,6 +1229,8 @@
                         <li class="no">Add your own sources</li>
                         <li class="no">Private to you</li>
                     </ul>
+                    <button class="btn-ghost btn-sm btn-block" disabled
+                        style="margin-top:16px;">Current plan</button>
                 </div>
 
                 <div class="tier">
@@ -1019,6 +1242,9 @@
                         <li>Ingest folders, Slack, email, GitHub</li>
                         <li>30 days</li>
                     </ul>
+                    <button class="btn-sm btn-block" id="buyMonth"
+                        style="margin-top:16px;"
+                        onclick="buyPlan('month')">Pay with Phantom</button>
                 </div>
 
                 <div class="tier">
@@ -1030,16 +1256,23 @@
                         <li>365 days</li>
                         <li>Renewing early adds time</li>
                     </ul>
+                    <button class="btn-sm btn-block" id="buyYear"
+                        style="margin-top:16px;"
+                        onclick="buyPlan('year')">Pay with Phantom</button>
                 </div>
 
             </div>
 
+            <div id="payStatus" class="status" style="margin-top:0;"></div>
+
             <div class="strip-cta">
                 <span>
-                    Passes are paid in USDC from your own wallet. Nothing
-                    auto-renews and no card is stored.
+                    Paid in USDC from your own wallet. These are fixed-length
+                    passes — Solana cannot charge you again without your
+                    approval, so nothing auto-renews and no card is stored.
+                    Renewing early adds time rather than replacing it.
                 </span>
-                <strong>See all plans →</strong>
+                <strong id="quarterNote">3 months, $60 →</strong>
             </div>
 
         </div>
@@ -1194,52 +1427,130 @@
 </section>
 
 
-<!-- =============================================================== PRICING -->
+<!-- ================================================================== DEMO -->
 
-<section class="page" id="page-pricing">
-    <div class="shell">
+<section class="page" id="page-demo">
+    <div class="shell stack" style="gap:34px;">
 
         <div class="hero" style="padding-bottom:0;">
-            <span class="eyebrow">Pricing</span>
-            <h1>One price. Your own workspace.</h1>
+            <span class="eyebrow">Under the hood</span>
+            <h1>Don't take our word for it. <em>Read the code.</em></h1>
             <p class="lede">
-                Paid in USDC on Solana, from the wallet you connect. No card, no
-                account, no billing details stored anywhere.
+                Cognira makes a strong claim — that it reconstructs real
+                reasoning instead of inventing plausible-sounding history. That
+                claim is only worth anything if you can check it. Here is the
+                code that actually runs, straight from the repository.
             </p>
         </div>
 
-        <div class="plans" id="plans"></div>
-
-        <div id="payStatus" class="status"></div>
-
-        <div class="notes">
-
-            <div class="note">
-                <h3>These are passes, not subscriptions</h3>
+        <div class="gh-cta">
+            <div>
+                <h3>The whole thing is on GitHub</h3>
                 <p>
-                    Solana cannot charge your wallet again without you approving
-                    it, so nothing auto-renews and no payment method is kept on
-                    file. When a pass ends, access simply stops.
+                    Every prompt, every schema, and the payment verification.
+                    Clone it, read it, run it against your own documents.
                 </p>
             </div>
+            <a
+                href="https://github.com/MalikEJohnson/Cognira"
+                target="_blank"
+                rel="noopener"
+            >Browse the source ↗</a>
+        </div>
 
-            <div class="note">
-                <h3>Renewing early loses you nothing</h3>
-                <p>
-                    Buying while a pass is still live adds the new time onto the
-                    end of the old one rather than replacing it.
-                </p>
+        <div class="codeblock">
+            <h2>1 — What gets pulled out of a document</h2>
+            <p>
+                Extraction is not free-text summarisation. The model is held to
+                a strict schema, so every decision comes back as validated data
+                with the same shape every time. Note <code>assumptions</code>
+                and <code>evidence</code>: the things a summary would throw away
+                are exactly the things worth keeping.
+            </p>
+            <div class="code">
+                <div class="code-head">
+                    <span>src/extract.ts</span>
+                    <a href="https://github.com/MalikEJohnson/Cognira" target="_blank" rel="noopener">view on GitHub ↗</a>
+                </div>
+                <pre data-code="schema"></pre>
             </div>
+        </div>
 
-            <div class="note">
-                <h3>Connecting a wallet is not a payment</h3>
-                <p>
-                    Signing in asks your wallet to sign a message. That proves
-                    you own the address — it moves no funds, costs no fee, and
-                    authorises no transaction.
-                </p>
+        <div class="codeblock">
+            <h2>2 — The rule that keeps it honest</h2>
+            <p>
+                This is the first instruction in the extraction prompt. A
+                fabricated institutional memory is worse than an empty one, so
+                the model is told to record that reasoning is missing rather
+                than supply a plausible reason of its own.
+            </p>
+            <div class="code">
+                <div class="code-head">
+                    <span>src/extract.ts — system prompt</span>
+                    <a href="https://github.com/MalikEJohnson/Cognira" target="_blank" rel="noopener">view on GitHub ↗</a>
+                </div>
+                <pre data-code="prompt"></pre>
             </div>
+        </div>
 
+        <div class="codeblock">
+            <h2>3 — The call itself</h2>
+            <p>
+                One request per document, with the schema enforced at the API
+                layer rather than parsed out of prose afterwards. If the model
+                returns something that does not fit, it is rejected instead of
+                being half-understood.
+            </p>
+            <div class="code">
+                <div class="code-head">
+                    <span>src/extract.ts</span>
+                    <a href="https://github.com/MalikEJohnson/Cognira" target="_blank" rel="noopener">view on GitHub ↗</a>
+                </div>
+                <pre data-code="call"></pre>
+            </div>
+        </div>
+
+        <div class="codeblock">
+            <h2>4 — Why follow-up questions are cheap</h2>
+            <p>
+                Your whole corpus sits behind a cache breakpoint in the system
+                prompt. The first question in a conversation pays for it; every
+                follow-up reuses it at roughly a tenth of the input cost.
+            </p>
+            <div class="code">
+                <div class="code-head">
+                    <span>src/ask.ts</span>
+                    <a href="https://github.com/MalikEJohnson/Cognira" target="_blank" rel="noopener">view on GitHub ↗</a>
+                </div>
+                <pre data-code="cache"></pre>
+            </div>
+        </div>
+
+        <div class="codeblock">
+            <h2>5 — How a payment is actually verified</h2>
+            <p>
+                Nothing the browser says about a payment is trusted. The server
+                reads the transaction back off chain and checks that the
+                treasury's balance genuinely went up by at least the price. The
+                transaction signature is a primary key in the database, so the
+                same payment cannot be redeemed twice.
+            </p>
+            <div class="code">
+                <div class="code-head">
+                    <span>src/payments.ts</span>
+                    <a href="https://github.com/MalikEJohnson/Cognira" target="_blank" rel="noopener">view on GitHub ↗</a>
+                </div>
+                <pre data-code="pay"></pre>
+            </div>
+        </div>
+
+        <hr class="section-rule">
+
+        <div class="why">
+            <b>Run it yourself</b>
+            <span><code>npm install</code></span>
+            <span><code>npm run seed:demo</code></span>
+            <span><code>npm run dev</code></span>
         </div>
 
     </div>
@@ -1247,9 +1558,76 @@
 
 
 <footer>
-    <div class="shell">
-        <span>Cognira — artificial institutional memory</span>
-        <span>Answers are reconstructed from your own records.</span>
+    <div class="shell footer-grid">
+
+        <div class="foot-brand">
+            <a class="brand" href="#/product">
+                <img src="/logo/fork.svg" alt="" width="24" height="24">
+                <span>cognir<em>a</em></span>
+            </a>
+            <p>Artificial institutional memory. Answers reconstructed from your own records.</p>
+            <div class="socials">
+                <a
+                    class="icon-link"
+                    data-link="github"
+                    href="#"
+                    target="_blank"
+                    rel="noopener"
+                    aria-label="Cognira on GitHub"
+                    title="GitHub"
+                >
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                        <path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.5 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.69 5.4-5.25 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/>
+                    </svg>
+                </a>
+                <a
+                    class="icon-link"
+                    data-link="twitter"
+                    href="#"
+                    target="_blank"
+                    rel="noopener"
+                    aria-label="Cognira on Twitter"
+                    title="Twitter"
+                >
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                        <path d="M23 4.5a8.4 8.4 0 0 1-2.4.66A4.2 4.2 0 0 0 22.4 2.9a8.4 8.4 0 0 1-2.66 1.02A4.19 4.19 0 0 0 12.6 7.75a11.9 11.9 0 0 1-8.64-4.38 4.19 4.19 0 0 0 1.3 5.59A4.16 4.16 0 0 1 3.4 8.4v.05a4.19 4.19 0 0 0 3.36 4.11 4.2 4.2 0 0 1-1.89.07 4.19 4.19 0 0 0 3.91 2.91A8.4 8.4 0 0 1 2 17.27a11.86 11.86 0 0 0 6.42 1.88c7.7 0 11.92-6.38 11.92-11.91 0-.18 0-.36-.01-.54A8.5 8.5 0 0 0 23 4.5z"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <div class="foot-col">
+            <h4>Cognira</h4>
+            <ul>
+                <li><a href="#/product">Product</a></li>
+                <li><a href="#/workspace">Workspace</a></li>
+                <li><a href="#/demo">Demo &amp; source</a></li>
+                <li><a href="#/workspace" onclick="focusPricing();return false;">Pricing</a></li>
+            </ul>
+        </div>
+
+        <div class="foot-col">
+            <h4>Contact us</h4>
+            <form class="contact-form" id="contactForm" onsubmit="return sendContact(event)">
+                <div class="contact-row">
+                    <input id="cName" placeholder="Your name" autocomplete="name" required>
+                    <input id="cEmail" type="email" placeholder="Email" autocomplete="email" required>
+                </div>
+                <textarea
+                    id="cMessage"
+                    placeholder="What do you need? Questions, a bug, or something you want it to read."
+                    required
+                ></textarea>
+                <button id="cSend" class="btn-sm btn-block" type="submit">Send message</button>
+                <div id="contactStatus" class="status"></div>
+            </form>
+        </div>
+
+    </div>
+
+    <div class="shell foot-legal">
+        <span>© Cognira</span>
+        <span>Built to say when it does not know.</span>
     </div>
 </footer>
 
@@ -1353,7 +1731,29 @@ async function api(path, body) {
 /* --------------------------------------------------------------- routing */
 
 
-const ROUTES = ["product", "workspace", "pricing"];
+const ROUTES = ["product", "workspace", "demo"];
+
+
+/*
+ * Pricing lives inside the Workspace tab rather than on a page of its own, so
+ * "take me to pricing" means: switch to Workspace, then scroll to the strip.
+ */
+function focusPricing() {
+
+    const scroll = function () {
+        const strip = document.getElementById("pricing");
+        if (strip) strip.scrollIntoView({ behavior: "smooth", block: "center" });
+    };
+
+    if (currentRoute() === "workspace") {
+        scroll();
+    } else {
+        go("workspace");
+        // renderRoute jumps to the top on a route change; scroll after it.
+        setTimeout(scroll, 60);
+    }
+
+}
 
 
 function currentRoute() {
@@ -1442,13 +1842,15 @@ function render() {
         walletBtn.title = "";
     }
 
+    // The pill only appears when it has something worth saying. Labelling an
+    // empty state "Demo" was clutter — the banner already says that.
     if (isMember()) {
         const days = state.membership.daysRemaining;
         pill.textContent = days + " day" + (days === 1 ? "" : "s") + " left";
         pill.className = "pill pill-active";
+        pill.style.display = "";
     } else {
-        pill.textContent = "Demo";
-        pill.className = "pill";
+        pill.style.display = "none";
     }
 
     if (isMember()) {
@@ -1472,7 +1874,8 @@ function render() {
             + "a meeting note, a vendor email and a mail thread. <strong>"
             + state.demo.remaining + " of " + state.demo.limit
             + "</strong> questions left this hour. "
-            + '<a href="#/pricing">Get your own workspace →</a>';
+            + '<a href="#/workspace" onclick="focusPricing();return false;">'
+            + "Get your own workspace →</a>";
 
     }
 
@@ -1537,7 +1940,7 @@ async function connectWallet() {
         setPayStatus(
             "Phantom was not detected. Install the Phantom extension, then reload this page."
         );
-        go("pricing");
+        focusPricing();
         window.open("https://phantom.app/download", "_blank", "noopener");
         return;
     }
@@ -1595,44 +1998,28 @@ function setPayStatus(text) {
 
 async function loadPlans() {
 
-    const container = document.getElementById("plans");
-
+    // The three tier cards are static markup now that pricing lives in the
+    // Workspace tab. This only reflects whether the server can take payment.
     let data;
     try {
         data = await api("/api/plans");
     } catch (error) {
-        container.innerHTML = '<p class="muted">Could not load plans.</p>';
+        setPayStatus("Could not reach the server to check pricing.");
         return;
     }
 
-    container.innerHTML = data.plans.map(function (plan) {
+    if (data.enabled) return;
 
-        // Per-month cost is the honest way to compare fixed-length passes.
-        const perMonth = plan.priceUsd / (plan.days / 30);
-        const isBest = plan.id === "year";
+    ["buyMonth", "buyYear"].forEach(function (id) {
+        const button = document.getElementById(id);
+        if (!button) return;
+        button.disabled = true;
+        button.textContent = "Unavailable";
+    });
 
-        const meta = plan.id === "month"
-            ? plan.days + " days"
-            : "$" + perMonth.toFixed(2) + " a month · " + plan.days + " days";
-
-        return '<div class="plan' + (isBest ? " plan-best" : "") + '">'
-            + (isBest ? '<span class="plan-flag">Best value</span>' : "")
-            + '<div class="plan-label">' + escapeHtml(plan.label) + "</div>"
-            + '<div class="plan-price">$' + plan.priceUsd + " <span>USDC</span></div>"
-            + '<div class="plan-meta">' + meta + "</div>"
-            + '<button onclick="buyPlan(\'' + plan.id + '\')"'
-            + (data.enabled ? "" : " disabled") + ">"
-            + (data.enabled ? "Pay with Phantom" : "Unavailable")
-            + "</button>"
-            + "</div>";
-
-    }).join("");
-
-    if (!data.enabled) {
-        setPayStatus(
-            "Payments are off until TREASURY_WALLET is set in .env to the wallet that should receive USDC."
-        );
-    }
+    setPayStatus(
+        "Payments are off until TREASURY_WALLET is set in .env to the wallet that should receive USDC."
+    );
 
 }
 
@@ -2061,7 +2448,7 @@ async function askCognira() {
         // A 402 or 429 means the pricing tab is the useful next step.
         if (error.payload && error.payload.needsPlan) {
             setPayStatus(error.message);
-            go("pricing");
+            focusPricing();
         }
 
     } finally {
@@ -2089,6 +2476,199 @@ document.getElementById("question").addEventListener(
 );
 
 
+/* ------------------------------------------------------- source excerpts */
+
+/*
+ * Real excerpts, copied from the files they are labelled with. If a visitor
+ * clones the repo these should match — a "here is the code" page that showed
+ * invented code would defeat its own purpose.
+ */
+const SNIPPETS = {
+
+    schema:
+`const DecisionSchema = z.object({
+  decision:     z.string(),   // stated in one sentence
+  reasoning:    z.string(),   // must trace back to the source text
+  alternatives: z.array(z.object({
+    option:       z.string(),
+    why_rejected: z.string(),
+  })),
+  people:      z.array(z.string()),
+  decided_on:  z.string(),           // YYYY-MM-DD, or "unknown"
+  assumptions: z.array(z.string()),  // taken as true, never verified
+  outcome:     z.string(),
+  evidence:    z.array(z.string()),  // verbatim quotes from the source
+  confidence:  z.number(),           // how well the text supports this
+});`,
+
+    prompt:
+`1. GROUND EVERYTHING. Every claim in "reasoning",
+   "alternatives", and "assumptions" must trace back to
+   something actually in the document. If the document says
+   Stripe was chosen but never says why, the reasoning is
+   "Not stated in this document" and the confidence is low.
+
+   Inventing plausible rationale is the single worst failure
+   mode here - a confidently wrong institutional memory is
+   more damaging than an empty one.`,
+
+    call:
+`const response = await client.messages.parse({
+  model: MODEL,
+  max_tokens: 16000,
+  system: SYSTEM_PROMPT,
+  thinking: { type: "adaptive" },
+  output_config: {
+    format: zodOutputFormat(ExtractionSchema),
+    effort: "high",
+  },
+  messages: [{ role: "user", content: userContent }],
+});`,
+
+    cache:
+`system: [
+  { type: "text", text: SYSTEM_PROMPT },
+  // Cache breakpoint sits after the corpus: stable across a
+  // conversation, invalidated only when a document is added.
+  { type: "text", text: context, cache_control: { type: "ephemeral" } },
+],`,
+
+    pay:
+`// Read the treasury's balance change straight off the chain,
+// rather than trusting anything the browser reported.
+const received = post
+  .filter((b) => b.mint === mint && b.owner === treasury)
+  .reduce((total, after) => {
+    const before = pre.find(
+      (b) => b.accountIndex === after.accountIndex && b.mint === mint,
+    );
+    const delta =
+      BigInt(after.uiTokenAmount.amount) - BigInt(before?.uiTokenAmount.amount ?? "0");
+    return total + (delta > 0n ? delta : 0n);
+  }, 0n);
+
+if (received < definition.amountBaseUnits) {
+  throw new PaymentError("That transaction paid less than the plan costs.");
+}`
+
+};
+
+
+const KEYWORDS =
+    /^(const|let|await|async|function|return|if|throw|new|import|from|export|interface|type|of|true|false|null)$/;
+
+
+/*
+ * Deliberately small: comments, strings, numbers and keywords, matched in one
+ * pass so the replacements cannot nest inside each other and mangle the code.
+ */
+function highlight(code) {
+
+    return escapeHtml(code).replace(
+        /(\/\/[^\n]*)|(&quot;(?:(?!&quot;)[^\n])*&quot;|'[^'\n]*')|(\b\d+n?\b)|([A-Za-z_$]+)/g,
+        function (match, comment, str, num, word) {
+
+            if (comment) return '<span class="tok-c">' + comment + "</span>";
+            if (str) return '<span class="tok-s">' + str + "</span>";
+            if (num) return '<span class="tok-n">' + num + "</span>";
+            if (word && KEYWORDS.test(word)) {
+                return '<span class="tok-k">' + word + "</span>";
+            }
+
+            return match;
+
+        }
+    );
+
+}
+
+
+function renderSnippets() {
+
+    document.querySelectorAll("pre[data-code]").forEach(function (block) {
+        const source = SNIPPETS[block.dataset.code];
+        if (source) block.innerHTML = highlight(source);
+    });
+
+}
+
+
+/* ---------------------------------------------------------------- links */
+
+/*
+ * Every outbound link in one place. Paste the Twitter URL in when the account
+ * exists — until then the icon renders visibly disabled rather than pointing
+ * at a dead page.
+ */
+const LINKS = {
+    github: "https://github.com/MalikEJohnson/Cognira",
+    twitter: ""
+};
+
+
+function applyLinks() {
+
+    document.querySelectorAll("[data-link]").forEach(function (anchor) {
+
+        const url = LINKS[anchor.dataset.link];
+
+        if (url) {
+            anchor.href = url;
+            anchor.removeAttribute("aria-disabled");
+        } else {
+            anchor.removeAttribute("href");
+            anchor.setAttribute("aria-disabled", "true");
+            anchor.title = anchor.title + " — link coming soon";
+        }
+
+    });
+
+}
+
+
+/* --------------------------------------------------------------- contact */
+
+
+async function sendContact(event) {
+
+    event.preventDefault();
+
+    const button = document.getElementById("cSend");
+    const status = document.getElementById("contactStatus");
+
+    const payload = {
+        name: document.getElementById("cName").value,
+        email: document.getElementById("cEmail").value,
+        message: document.getElementById("cMessage").value
+    };
+
+    button.disabled = true;
+    status.innerText = "Sending…";
+
+    try {
+
+        await api("/api/contact", payload);
+
+        status.innerText = "Thanks — we have it. We will reply to " + payload.email + ".";
+        document.getElementById("contactForm").reset();
+
+    } catch (error) {
+
+        status.innerText = error.message;
+
+    } finally {
+
+        button.disabled = false;
+
+    }
+
+    return false;
+
+}
+
+
+applyLinks();
+renderSnippets();
 renderRoute();
 refreshMe().then(loadDecisions).then(loadPlans);
 

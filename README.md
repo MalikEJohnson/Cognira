@@ -250,3 +250,37 @@ material ever reaches the server.
 - Put a real backup on `data/cognira.db`.
 - Decide your refund position before the first sale. On-chain payments have no
   chargebacks, which cuts both ways.
+
+
+## Contact form
+
+The footer carries a contact form on every page. Messages are **stored in the
+database rather than emailed**, so there is no mail provider to configure and
+nothing fails silently in the background. Read the inbox with:
+
+    npm run messages
+
+It is rate limited to 3 messages an hour per visitor, validates the email
+shape, and records the sender's wallet if they happen to be signed in.
+
+## Site structure
+
+Three tabs, plus a footer that appears on all of them:
+
+    Product     the pitch and how the three stages fit together
+    Workspace   the demo chat, pricing, add-knowledge, decision memory
+    Demo        the real source code behind the claims, and the GitHub link
+
+Pricing lives inside the Workspace tab rather than on a page of its own.
+Anything money-shaped — the strip, the demo banner, the locked panel, a 402 or
+a spent demo quota — routes to that strip.
+
+**Outbound links live in one place.** `LINKS` at the bottom of
+`public/index.html` holds the GitHub and Twitter URLs. The Twitter icon
+renders visibly disabled until a URL is filled in, rather than pointing at a
+dead page:
+
+    const LINKS = {
+        github: "https://github.com/MalikEJohnson/Cognira",
+        twitter: ""      // paste the profile URL here
+    };
