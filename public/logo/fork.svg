@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" color="#8d95a5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <title>Cognira — The Fork</title>
+  <!-- the two paths not taken, kept rather than erased -->
+  <g stroke="currentColor" stroke-width="4" opacity="0.5">
+    <path d="M26 32 L43 15" stroke-dasharray="2.5 5.5"/>
+    <path d="M26 32 L43 49" stroke-dasharray="2.5 5.5"/>
+  </g>
+  <circle cx="45" cy="13" r="3" fill="currentColor" opacity="0.5"/>
+  <circle cx="45" cy="51" r="3" fill="currentColor" opacity="0.5"/>
+  <!-- the path taken -->
+  <path d="M9 32 H26 L55 32" stroke="#7c5cff" stroke-width="4.5"/>
+  <circle cx="26" cy="32" r="5" fill="#7c5cff"/>
+</svg>

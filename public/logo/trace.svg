@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" color="#8d95a5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <title>Cognira — The Trace</title>
+  <!-- forward through time, then back along the same record -->
+  <path d="M12 20 H41 A11 11 0 0 1 41 42 H24" stroke="currentColor" stroke-width="4" opacity="0.55"/>
+  <path d="M30 35 L23 42 L30 49" stroke="#7c5cff" stroke-width="4.5"/>
+  <circle cx="12" cy="20" r="4" fill="currentColor" opacity="0.55"/>
+  <circle cx="41" cy="20" r="4" fill="currentColor" opacity="0.55"/>
+</svg>
