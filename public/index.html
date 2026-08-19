@@ -1,0 +1,2706 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Cognira — institutional memory for how you decide</title>
+
+    <meta
+        name="description"
+        content="Cognira reconstructs the reasoning behind past decisions from your documents, Slack, email and commits — not just what happened, but why."
+    >
+
+    <link
+        rel="icon"
+        type="image/svg+xml"
+        href="/logo/fork.svg"
+    >
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    >
+
+    <style>
+
+        :root {
+            --bg:            #08090d;
+            --surface:       #0f1117;
+            --surface-raised:#14161f;
+            --border:        #1e212b;
+            --border-strong: #2c3040;
+            --text:          #f2f3f7;
+            --muted:         #8b90a0;
+            --faint:         #5f6474;
+            --accent:        #7c5cff;
+            --accent-soft:   #a68fff;
+            --accent-dim:    #2a2150;
+            --danger-bg:     #1d1013;
+            --danger-border: #4a2028;
+            --danger-text:   #ffb3bd;
+            --warn:          #ffc46b;
+
+            --sans: "Manrope", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+            --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+
+            --radius: 14px;
+            --shell: 1140px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 16px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* A single soft bloom behind the top of the page. One flourish, not five. */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: -20% 0 auto 0;
+            height: 620px;
+            background:
+                radial-gradient(60% 60% at 50% 0%, rgba(124, 92, 255, 0.13), transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .shell {
+            max-width: var(--shell);
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        /* ------------------------------------------------------------ nav */
+
+        .nav {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: rgba(8, 9, 13, 0.82);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-inner {
+            max-width: var(--shell);
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 66px;
+            display: flex;
+            align-items: center;
+            gap: 28px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 21px;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            text-decoration: none;
+            flex: 0 0 auto;
+        }
+
+        .brand img {
+            width: 26px;
+            height: 26px;
+        }
+
+        .brand em {
+            font-style: normal;
+            color: var(--accent);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-right: auto;
+        }
+
+        .tab {
+            padding: 8px 14px;
+            border-radius: 9px;
+            font-size: 14.5px;
+            font-weight: 500;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.15s ease, background 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            color: var(--text);
+            background: var(--surface);
+        }
+
+        .tab.current {
+            color: var(--text);
+            background: var(--surface-raised);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 0 0 auto;
+        }
+
+        /* -------------------------------------------------------- controls */
+
+        button {
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            padding: 13px 18px;
+            background: var(--accent);
+            color: #fff;
+            cursor: pointer;
+            transition: filter 0.15s ease, border-color 0.15s ease;
+        }
+
+        button:hover:not(:disabled) {
+            filter: brightness(1.1);
+        }
+
+        button:disabled {
+            opacity: 0.45;
+            cursor: default;
+        }
+
+        button:focus-visible,
+        .tab:focus-visible,
+        input:focus-visible,
+        textarea:focus-visible {
+            outline: 2px solid var(--accent-soft);
+            outline-offset: 2px;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--border-strong);
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .btn-ghost:hover:not(:disabled) {
+            color: var(--text);
+            border-color: var(--faint);
+            filter: none;
+        }
+
+        .btn-sm {
+            padding: 9px 14px;
+            font-size: 14px;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border-strong);
+            color: var(--text);
+            padding: 13px 14px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            font-size: 15px;
+            font-family: inherit;
+            line-height: 1.5;
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: var(--faint);
+        }
+
+        /* ----------------------------------------------------------- type */
+
+        h1, h2, h3 {
+            letter-spacing: -0.035em;
+            line-height: 1.12;
+            text-wrap: balance;
+            margin: 0;
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 5.6vw, 3.9rem);
+            font-weight: 800;
+        }
+
+        h2 {
+            font-size: clamp(1.6rem, 3vw, 2.1rem);
+            font-weight: 800;
+        }
+
+        h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .eyebrow {
+            font-family: var(--mono);
+            font-size: 11.5px;
+            font-weight: 500;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--faint);
+        }
+
+        .lede {
+            font-size: 1.15rem;
+            color: var(--muted);
+            max-width: 60ch;
+            margin: 0;
+        }
+
+        .muted { color: var(--muted); }
+        .faint { color: var(--faint); }
+
+        code {
+            font-family: var(--mono);
+            font-size: 0.88em;
+            background: var(--surface-raised);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1px 6px;
+        }
+
+        /* ---------------------------------------------------------- pages */
+
+        .page {
+            display: none;
+            padding: 64px 0 96px;
+        }
+
+        .page.current {
+            display: block;
+        }
+
+        .stack {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* ----------------------------------------------------------- hero */
+
+        .hero {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            padding-bottom: 24px;
+            max-width: 780px;
+        }
+
+        .hero h1 em {
+            font-style: normal;
+            color: var(--accent-soft);
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+
+        /* --------------------------------------------------------- panels */
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 26px;
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        /* --------------------------------------------------- how it works */
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 18px;
+            margin-top: 30px;
+        }
+
+        .step {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* The numbers are real: these run in order, each on the last's output. */
+        .step-n {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--accent-soft);
+            letter-spacing: 0.1em;
+        }
+
+        .step p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 15px;
+        }
+
+        /* -------------------------------------------------------- banners */
+
+        .banner {
+            display: none;
+            padding: 15px 18px;
+            border-radius: 11px;
+            border: 1px solid var(--border-strong);
+            background: var(--surface);
+            color: var(--muted);
+            font-size: 14.5px;
+        }
+
+        .banner.show { display: block; }
+        .banner strong { color: var(--text); font-weight: 600; }
+
+        .pill {
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--border-strong);
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .pill-active {
+            border-color: var(--accent-dim);
+            color: var(--accent-soft);
+        }
+
+        /* ----------------------------------------------------------- chat */
+
+        .transcript {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+            max-height: 52vh;
+            overflow-y: auto;
+        }
+
+        .transcript.active { display: flex; }
+
+        .turn {
+            padding: 14px 16px;
+            border-radius: 11px;
+            white-space: pre-wrap;
+            line-height: 1.65;
+            font-size: 15px;
+        }
+
+        .turn-you {
+            background: var(--accent-dim);
+            border: 1px solid #382c6e;
+            align-self: flex-end;
+            max-width: 86%;
+        }
+
+        .turn-cognira {
+            background: var(--bg);
+            border: 1px solid var(--border);
+        }
+
+        .turn-pending { color: var(--muted); }
+
+        .turn-error {
+            background: var(--danger-bg);
+            border: 1px solid var(--danger-border);
+            color: var(--danger-text);
+        }
+
+        .turn-label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 10.5px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--faint);
+            margin-bottom: 7px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .actions button:first-child { flex: 1; }
+
+        /* ------------------------------------------------------ decisions */
+
+        .decision {
+            border-top: 1px solid var(--border);
+            padding: 20px 0;
+        }
+
+        .decision:first-child { border-top: none; padding-top: 4px; }
+        .decision h3 { margin-bottom: 8px; }
+        .decision p { margin: 8px 0; }
+
+        .listing {
+            margin: 6px 0 0;
+            padding-left: 20px;
+            color: #c3c9d4;
+        }
+
+        .assumption { color: var(--warn); }
+
+        .confidence {
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--accent-soft);
+        }
+
+        .source {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--faint);
+        }
+
+        /* --------------------------------------------------------- locked */
+
+        .locked .lockable {
+            opacity: 0.3;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .lock-note {
+            display: none;
+            margin-top: 16px;
+            padding: 15px 17px;
+            border-radius: 11px;
+            border: 1px solid var(--accent-dim);
+            background: #120f24;
+            color: #c9c2ff;
+            font-size: 14.5px;
+        }
+
+        .locked .lock-note { display: block; }
+
+        .status {
+            color: var(--muted);
+            font-size: 14px;
+            margin-top: 12px;
+            min-height: 20px;
+        }
+
+        /* -------------------------------------------------------- pricing */
+
+        .plans {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 18px;
+            margin-top: 36px;
+        }
+
+        .plan {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+        }
+
+        .plan-best {
+            border-color: var(--accent-dim);
+            background: linear-gradient(180deg, #12102180, var(--surface) 55%);
+        }
+
+        .plan-flag {
+            position: absolute;
+            top: -10px;
+            left: 28px;
+            font-family: var(--mono);
+            font-size: 10.5px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent-soft);
+            background: var(--bg);
+            border: 1px solid var(--accent-dim);
+            border-radius: 999px;
+            padding: 3px 10px;
+        }
+
+        .plan-label {
+            font-size: 14.5px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .plan-price {
+            font-size: 2.6rem;
+            font-weight: 800;
+            letter-spacing: -0.045em;
+            line-height: 1.1;
+        }
+
+        .plan-price span {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--faint);
+            letter-spacing: 0;
+        }
+
+        .plan-meta {
+            font-family: var(--mono);
+            font-size: 12.5px;
+            color: var(--faint);
+            min-height: 20px;
+            margin-bottom: 20px;
+        }
+
+        .plan button { margin-top: auto; width: 100%; }
+
+        .notes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+            margin-top: 40px;
+        }
+
+        .note {
+            border-top: 1px solid var(--border);
+            padding-top: 18px;
+        }
+
+        .note h3 { margin-bottom: 8px; }
+        .note p { margin: 0; color: var(--muted); font-size: 14.5px; }
+
+        /* ------------------------------------------- workspace: tier strip */
+
+        /* The whole strip is a link to the pricing tab — anything money-shaped
+           on this page should take you somewhere you can actually buy. */
+        .tier-strip {
+            cursor: pointer;
+            transition: border-color 0.15s ease;
+        }
+
+        .tier-strip:hover {
+            border-color: var(--border-strong);
+        }
+
+        .tiers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+            margin: 18px 0 20px;
+        }
+
+        .tier {
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            padding: 18px;
+            background: var(--bg);
+        }
+
+        .tier-current {
+            border-color: var(--accent-dim);
+            background: #100e1d;
+        }
+
+        .tier-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .tier-cost {
+            font-size: 1.9rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            margin: 4px 0 12px;
+        }
+
+        .tier-cost span {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--faint);
+            letter-spacing: 0;
+        }
+
+        .tier ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 13.5px;
+            color: var(--muted);
+        }
+
+        .tier li::before {
+            content: "✓ ";
+            color: var(--accent-soft);
+        }
+
+        .tier li.no::before {
+            content: "— ";
+            color: var(--faint);
+        }
+
+        .strip-cta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            flex-wrap: wrap;
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+            font-size: 14.5px;
+            color: var(--muted);
+        }
+
+        .strip-cta strong {
+            color: var(--accent-soft);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* ------------------------------------------- workspace: three-ups */
+
+        .three {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 18px;
+        }
+
+        .cap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px;
+        }
+
+        .cap h3 { margin-bottom: 8px; }
+
+        .cap p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14.5px;
+        }
+
+        .cap-icon {
+            display: block;
+            font-size: 20px;
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+
+        /* ------------------------------------------ workspace: demo steps */
+
+        .runsheet {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 18px;
+            padding: 16px 18px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            background: var(--bg);
+        }
+
+        .runstep {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 12px;
+            align-items: baseline;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .runstep b {
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            color: var(--faint);
+            font-weight: 500;
+        }
+
+        .runstep.live b { color: var(--accent-soft); }
+        .runstep.live { color: var(--text); }
+        .runstep.done b { color: #6fcf97; }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .chip {
+            background: var(--surface-raised);
+            border: 1px solid var(--border-strong);
+            color: var(--muted);
+            border-radius: 999px;
+            padding: 7px 13px;
+            font-size: 13.5px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            transition: color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .chip:hover {
+            color: var(--text);
+            border-color: var(--faint);
+            filter: none;
+        }
+
+        .why {
+            display: flex;
+            gap: 10px 26px;
+            flex-wrap: wrap;
+            align-items: baseline;
+            color: var(--muted);
+            font-size: 15px;
+        }
+
+        .why b {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .section-rule {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 14px 0 0;
+        }
+
+        /* ----------------------------------------------------------- code */
+
+        .code {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            overflow: hidden;
+            margin: 0;
+        }
+
+        .code-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            font-family: var(--mono);
+            font-size: 11.5px;
+            color: var(--faint);
+            letter-spacing: 0.04em;
+        }
+
+        .code-head a {
+            color: var(--accent-soft);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .code-head a:hover { text-decoration: underline; }
+
+        /* Wide code scrolls inside its own box; the page never moves sideways. */
+        .code pre {
+            margin: 0;
+            padding: 18px;
+            overflow-x: auto;
+            font-family: var(--mono);
+            font-size: 12.5px;
+            line-height: 1.7;
+            color: #d5d8e2;
+        }
+
+        .tok-c { color: #5f6474; font-style: italic; }
+        .tok-s { color: #86d0a0; }
+        .tok-k { color: #a68fff; }
+        .tok-n { color: #ffc46b; }
+
+        .codeblock {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .codeblock > p {
+            margin: 0;
+            color: var(--muted);
+            max-width: 68ch;
+        }
+
+        .gh {
+            border: 1px solid var(--border-strong);
+        }
+
+        .gh-cta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding: 26px;
+            border: 1px solid var(--accent-dim);
+            border-radius: var(--radius);
+            background: linear-gradient(180deg, #12102180, var(--surface) 60%);
+        }
+
+        .gh-cta h3 { margin-bottom: 6px; }
+        .gh-cta p { margin: 0; color: var(--muted); max-width: 60ch; }
+
+        .gh-cta a {
+            text-decoration: none;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+            font-size: 15px;
+            padding: 13px 20px;
+            border-radius: 10px;
+            white-space: nowrap;
+        }
+
+        .gh-cta a:hover { filter: brightness(1.1); }
+
+        /* ----------------------------------------------------- icon links */
+
+        .icon-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            border: 1px solid var(--border-strong);
+            color: var(--muted);
+            transition: color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .icon-link:hover {
+            color: var(--text);
+            border-color: var(--faint);
+        }
+
+        /* Until a URL is filled in, the icon is visibly not yet a link. */
+        .icon-link[aria-disabled="true"] {
+            opacity: 0.45;
+            cursor: default;
+        }
+
+        .icon-link[aria-disabled="true"]:hover {
+            color: var(--muted);
+            border-color: var(--border-strong);
+        }
+
+        /* --------------------------------------------------------- footer */
+
+        footer {
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+            padding: 48px 0 28px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr 1.6fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        .foot-brand .brand {
+            font-size: 19px;
+            margin-bottom: 12px;
+        }
+
+        .foot-brand p {
+            margin: 0 0 16px;
+            color: var(--faint);
+            max-width: 32ch;
+        }
+
+        .socials {
+            display: flex;
+            gap: 10px;
+        }
+
+        .foot-col h4 {
+            margin: 0 0 14px;
+            font-family: var(--mono);
+            font-size: 11.5px;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--faint);
+        }
+
+        .foot-col ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .foot-col a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+
+        .foot-col a:hover { color: var(--text); }
+
+        .contact-form input,
+        .contact-form textarea {
+            margin-bottom: 10px;
+            padding: 11px 13px;
+            font-size: 14px;
+        }
+
+        .contact-form textarea {
+            min-height: 92px;
+        }
+
+        .contact-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .foot-legal {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+            padding-top: 22px;
+            color: var(--faint);
+            font-size: 13px;
+        }
+
+        @media (max-width: 860px) {
+            .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+        }
+
+        @media (max-width: 860px) {
+            .split { grid-template-columns: 1fr; }
+            .nav-inner { height: auto; padding: 12px 20px; flex-wrap: wrap; gap: 12px; }
+            .shell { padding: 0 20px; }
+            .page { padding: 40px 0 64px; }
+            .tabs { order: 3; width: 100%; margin-right: 0; }
+            .nav-right { margin-left: auto; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            * { transition: none !important; }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<nav class="nav">
+    <div class="nav-inner">
+
+        <a class="brand" href="#/product">
+            <img src="/logo/fork.svg" alt="" width="26" height="26">
+            <span>cognir<em>a</em></span>
+        </a>
+
+        <div class="tabs">
+            <a class="tab" href="#/product"   data-route="product">Product</a>
+            <a class="tab" href="#/workspace" data-route="workspace">Workspace</a>
+            <a class="tab" href="#/demo"      data-route="demo">Demo</a>
+        </div>
+
+        <div class="nav-right">
+            <a
+                class="icon-link"
+                data-link="github"
+                href="#"
+                target="_blank"
+                rel="noopener"
+                aria-label="Cognira on GitHub"
+                title="GitHub"
+            >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                    <path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.5 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.69 5.4-5.25 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/>
+                </svg>
+            </a>
+
+            <a
+                class="icon-link"
+                data-link="twitter"
+                href="#"
+                target="_blank"
+                rel="noopener"
+                aria-label="Cognira on Twitter"
+                title="Twitter"
+            >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                    <path d="M23 4.5a8.4 8.4 0 0 1-2.4.66A4.2 4.2 0 0 0 22.4 2.9a8.4 8.4 0 0 1-2.66 1.02A4.19 4.19 0 0 0 12.6 7.75a11.9 11.9 0 0 1-8.64-4.38 4.19 4.19 0 0 0 1.3 5.59A4.16 4.16 0 0 1 3.4 8.4v.05a4.19 4.19 0 0 0 3.36 4.11 4.2 4.2 0 0 1-1.89.07 4.19 4.19 0 0 0 3.91 2.91A8.4 8.4 0 0 1 2 17.27a11.86 11.86 0 0 0 6.42 1.88c7.7 0 11.92-6.38 11.92-11.91 0-.18 0-.36-.01-.54A8.5 8.5 0 0 0 23 4.5z"/>
+                </svg>
+            </a>
+
+            <!-- Only shown once there is something to say: days remaining. -->
+            <span id="planPill" class="pill" style="display:none;"></span>
+
+            <button id="walletBtn" class="btn-ghost btn-sm" onclick="onWalletClick()">
+                Connect wallet
+            </button>
+        </div>
+
+    </div>
+</nav>
+
+
+<!-- =============================================================== PRODUCT -->
+
+<section class="page" id="page-product">
+    <div class="shell">
+
+        <div class="hero">
+            <span class="eyebrow">Institutional memory</span>
+            <h1>Your company remembers <em>why</em>, not just what.</h1>
+            <p class="lede">
+                Search tells you where a decision was written down. Cognira
+                reconstructs the reasoning behind it — the options that lost,
+                who argued for what, and the assumptions nobody checked.
+            </p>
+            <div class="hero-actions">
+                <button onclick="tryDemo()">Try the demo</button>
+                <button class="btn-ghost" onclick="focusPricing()">See pricing</button>
+                <button class="btn-ghost" onclick="go('demo')">Read the code</button>
+            </div>
+        </div>
+
+        <div class="steps">
+
+            <div class="step">
+                <span class="step-n">01 / INGEST</span>
+                <h3>Read what already exists</h3>
+                <p>
+                    Folders, Slack and Gmail exports, Word documents, PDFs,
+                    mail archives, GitHub commits and pull request threads.
+                    Nothing has to be written twice.
+                </p>
+            </div>
+
+            <div class="step">
+                <span class="step-n">02 / EXTRACT</span>
+                <h3>Pull the reasoning out</h3>
+                <p>
+                    Each document yields structured decisions: what was chosen,
+                    why, which alternatives lost and on what grounds, who was
+                    involved, and what was assumed without being verified.
+                </p>
+            </div>
+
+            <div class="step">
+                <span class="step-n">03 / ASK</span>
+                <h3>Reconstruct, don't retrieve</h3>
+                <p>
+                    Ask why something happened and get an account assembled
+                    across every source, cited and scored — or a straight
+                    answer that the record does not say.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="panel" style="margin-top:36px;">
+            <span class="eyebrow">Why it is built this way</span>
+            <h2 style="margin:12px 0 14px;">A memory that guesses is worse than none</h2>
+            <p class="lede">
+                Cognira is instructed to say when the record does not contain an
+                answer, to attribute every claim to the document it came from,
+                and to surface disagreement between sources rather than quietly
+                pick one. An organisation acting on a confidently fabricated
+                memory is the failure this is designed against.
+            </p>
+        </div>
+
+    </div>
+</section>
+
+
+<!-- ============================================================= WORKSPACE -->
+
+<section class="page" id="page-workspace">
+    <div class="shell stack">
+
+        <div style="text-align:center;">
+            <span class="eyebrow">Workspace</span>
+            <h2 style="margin:10px 0 8px;">Your agent, working from your own records</h2>
+            <p class="lede" style="margin:0 auto;">
+                Ask why something happened. Cognira answers from what your
+                company already wrote down.
+            </p>
+        </div>
+
+        <!-- PRICING -->
+        <div class="panel tier-strip" id="pricing">
+
+            <div class="panel-head" style="margin-bottom:0;">
+                <h3>Pricing</h3>
+                <span class="faint" style="font-size:13.5px;" id="pricingScope">
+                    You are on the free demo
+                </span>
+            </div>
+
+            <div class="tiers">
+
+                <div class="tier tier-current" id="tierDemo">
+                    <div class="tier-name">Demo</div>
+                    <div class="tier-cost">$0</div>
+                    <ul>
+                        <li id="tierDemoQuota">5 questions an hour</li>
+                        <li>Shared sample workspace</li>
+                        <li class="no">Add your own sources</li>
+                        <li class="no">Private to you</li>
+                    </ul>
+                    <button class="btn-ghost btn-sm btn-block" disabled
+                        style="margin-top:16px;">Current plan</button>
+                </div>
+
+                <div class="tier">
+                    <div class="tier-name">1 month</div>
+                    <div class="tier-cost">$20 <span>USDC</span></div>
+                    <ul>
+                        <li>Unlimited questions</li>
+                        <li>Your own private workspace</li>
+                        <li>Ingest folders, Slack, email, GitHub</li>
+                        <li>30 days</li>
+                    </ul>
+                    <button class="btn-sm btn-block" id="buyMonth"
+                        style="margin-top:16px;"
+                        onclick="buyPlan('month')">Pay with Phantom</button>
+                </div>
+
+                <div class="tier">
+                    <div class="tier-name">1 year</div>
+                    <div class="tier-cost">$200 <span>USDC</span></div>
+                    <ul>
+                        <li>Everything in monthly</li>
+                        <li>$16.44 a month</li>
+                        <li>365 days</li>
+                        <li>Renewing early adds time</li>
+                    </ul>
+                    <button class="btn-sm btn-block" id="buyYear"
+                        style="margin-top:16px;"
+                        onclick="buyPlan('year')">Pay with Phantom</button>
+                </div>
+
+            </div>
+
+            <div id="payStatus" class="status" style="margin-top:0;"></div>
+
+            <div class="strip-cta">
+                <span>
+                    Paid in USDC from your own wallet. These are fixed-length
+                    passes — Solana cannot charge you again without your
+                    approval, so nothing auto-renews and no card is stored.
+                    Renewing early adds time rather than replacing it.
+                </span>
+                <strong id="quarterNote">3 months, $60 →</strong>
+            </div>
+
+        </div>
+
+        <div id="banner" class="banner"></div>
+
+        <!-- WHAT YOUR AGENT CAN DO -->
+        <div>
+            <h2 style="text-align:center; margin-bottom:20px;">
+                What your agent can do
+            </h2>
+
+            <div class="three">
+
+                <div class="cap">
+                    <span class="cap-icon" aria-hidden="true">📥</span>
+                    <h3>Read what you already have</h3>
+                    <p>
+                        Folders, Slack and Gmail exports, Word files, PDFs, mail
+                        archives, GitHub commits and pull request threads.
+                    </p>
+                </div>
+
+                <div class="cap">
+                    <span class="cap-icon" aria-hidden="true">🧩</span>
+                    <h3>Extract the reasoning</h3>
+                    <p>
+                        Not just what was decided — the options that lost, why
+                        each lost, who drove it, and what nobody verified.
+                    </p>
+                </div>
+
+                <div class="cap">
+                    <span class="cap-icon" aria-hidden="true">💬</span>
+                    <h3>Answer why questions</h3>
+                    <p>
+                        Evidence assembled across every source, cited to the
+                        document it came from, with a confidence score.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SEE THE AGENT IN ACTION -->
+        <div>
+            <h2 style="text-align:center; margin-bottom:8px;">
+                See the agent in action
+            </h2>
+            <p class="lede" style="text-align:center; margin:0 auto 20px;">
+                The demo workspace holds one payments decision, recorded four
+                different ways. Ask about it and watch what the agent does.
+            </p>
+
+            <div class="panel" id="askCard">
+
+                <!-- What actually happens on each question, stepped live -->
+                <div class="runsheet" id="runsheet">
+                    <div class="runstep" data-step="1">
+                        <b>01</b>
+                        <span id="step1">Reads every document in the workspace</span>
+                    </div>
+                    <div class="runstep" data-step="2">
+                        <b>02</b>
+                        <span>Connects evidence across Slack, email and meeting notes</span>
+                    </div>
+                    <div class="runstep" data-step="3">
+                        <b>03</b>
+                        <span>Reconstructs the decision, cites its sources, scores its confidence</span>
+                    </div>
+                </div>
+
+                <div class="chips" id="chips">
+                    <button class="chip" onclick="askSample(this)">Why did we choose Stripe?</button>
+                    <button class="chip" onclick="askSample(this)">What are we assuming that nobody checked?</button>
+                    <button class="chip" onclick="askSample(this)">Why was Adyen rejected?</button>
+                </div>
+
+                <div id="transcript" class="transcript"></div>
+
+                <textarea
+                    id="question"
+                    placeholder="Ask why something happened…"
+                ></textarea>
+
+                <div class="actions">
+                    <button id="askBtn" onclick="askCognira()">Ask Cognira</button>
+                    <button
+                        id="resetBtn"
+                        class="btn-ghost"
+                        onclick="resetConversation()"
+                        style="display:none;"
+                    >New conversation</button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- YOUR OWN WORKSPACE -->
+        <div class="split">
+
+            <div class="panel locked" id="knowledgeCard">
+
+                <div class="panel-head">
+                    <h3>Add knowledge</h3>
+                </div>
+
+                <div class="lockable">
+                    <input id="title" placeholder="Title">
+                    <input id="source" placeholder="Source (meeting, email, Slack…)">
+                    <textarea
+                        id="content"
+                        placeholder="Paste meeting notes, a decision, an email, or project information…"
+                    ></textarea>
+                    <button id="addBtn" class="btn-block" onclick="addKnowledge()">
+                        Add to Cognira
+                    </button>
+                    <div id="addStatus" class="status"></div>
+                </div>
+
+                <div class="lock-note">
+                    Your own workspace needs a pass — the demo is shared and
+                    read-only, so nothing you added here would stay private.
+                    <br><br>
+                    <button class="btn-sm" onclick="go('pricing')">
+                        Unlock from $20
+                    </button>
+                </div>
+
+            </div>
+
+            <div class="panel">
+                <div class="panel-head">
+                    <h3>Decision memory</h3>
+                    <span id="decisionScope" class="faint" style="font-size:13.5px;"></span>
+                </div>
+                <div id="decisions"><p class="muted">Loading…</p></div>
+            </div>
+
+        </div>
+
+        <!-- WHY -->
+        <hr class="section-rule">
+        <div class="why">
+            <b>Why Cognira</b>
+            <span><b>Grounded</b> — every claim traces to a document</span>
+            <span><b>Honest</b> — says when the record does not say</span>
+            <span><b>Yours</b> — private workspace, your own sources</span>
+        </div>
+
+    </div>
+</section>
+
+
+<!-- ================================================================== DEMO -->
+
+<section class="page" id="page-demo">
+    <div class="shell stack" style="gap:34px;">
+
+        <div class="hero" style="padding-bottom:0;">
+            <span class="eyebrow">Under the hood</span>
+            <h1>Don't take our word for it. <em>Read the code.</em></h1>
+            <p class="lede">
+                Cognira makes a strong claim — that it reconstructs real
+                reasoning instead of inventing plausible-sounding history. That
+                claim is only worth anything if you can check it. Here is the
+                code that actually runs, straight from the repository.
+            </p>
+        </div>
+
+        <div class="gh-cta">
+            <div>
+                <h3>The whole thing is on GitHub</h3>
+                <p>
+                    Every prompt, every schema, and the payment verification.
+                    Clone it, read it, run it against your own documents.
+                </p>
+            </div>
+            <a
+                href="https://github.com/MalikEJohnson/Cognira"
+                target="_blank"
+                rel="noopener"
+            >Browse the source ↗</a>
+        </div>
+
+        <div class="codeblock">
+            <h2>1 — What gets pulled out of a document</h2>
+            <p>
+                Extraction is not free-text summarisation. The model is held to
+                a strict schema, so every decision comes back as validated data
+                with the same shape every time. Note <code>assumptions</code>
+                and <code>evidence</code>: the things a summary would throw away
+                are exactly the things worth keeping.
+            </p>
+            <div class="code">
+                <div class="code-head">
+                    <span>src/extract.ts</span>
+                    <a href="https://github.com/MalikEJohnson/Cognira" target="_blank" rel="noopener">view on GitHub ↗</a>
+                </div>
+                <pre data-code="schema"></pre>
+            </div>
+        </div>
+
+        <div class="codeblock">
+            <h2>2 — The rule that keeps it honest</h2>
+            <p>
+                This is the first instruction in the extraction prompt. A
+                fabricated institutional memory is worse than an empty one, so
+                the model is told to record that reasoning is missing rather
+                than supply a plausible reason of its own.
+            </p>
+            <div class="code">
+                <div class="code-head">
+                    <span>src/extract.ts — system prompt</span>
+                    <a href="https://github.com/MalikEJohnson/Cognira" target="_blank" rel="noopener">view on GitHub ↗</a>
+                </div>
+                <pre data-code="prompt"></pre>
+            </div>
+        </div>
+
+        <div class="codeblock">
+            <h2>3 — The call itself</h2>
+            <p>
+                One request per document, with the schema enforced at the API
+                layer rather than parsed out of prose afterwards. If the model
+                returns something that does not fit, it is rejected instead of
+                being half-understood.
+            </p>
+            <div class="code">
+                <div class="code-head">
+                    <span>src/extract.ts</span>
+                    <a href="https://github.com/MalikEJohnson/Cognira" target="_blank" rel="noopener">view on GitHub ↗</a>
+                </div>
+                <pre data-code="call"></pre>
+            </div>
+        </div>
+
+        <div class="codeblock">
+            <h2>4 — Why follow-up questions are cheap</h2>
+            <p>
+                Your whole corpus sits behind a cache breakpoint in the system
+                prompt. The first question in a conversation pays for it; every
+                follow-up reuses it at roughly a tenth of the input cost.
+            </p>
+            <div class="code">
+                <div class="code-head">
+                    <span>src/ask.ts</span>
+                    <a href="https://github.com/MalikEJohnson/Cognira" target="_blank" rel="noopener">view on GitHub ↗</a>
+                </div>
+                <pre data-code="cache"></pre>
+            </div>
+        </div>
+
+        <div class="codeblock">
+            <h2>5 — How a payment is actually verified</h2>
+            <p>
+                Nothing the browser says about a payment is trusted. The server
+                reads the transaction back off chain and checks that the
+                treasury's balance genuinely went up by at least the price. The
+                transaction signature is a primary key in the database, so the
+                same payment cannot be redeemed twice.
+            </p>
+            <div class="code">
+                <div class="code-head">
+                    <span>src/payments.ts</span>
+                    <a href="https://github.com/MalikEJohnson/Cognira" target="_blank" rel="noopener">view on GitHub ↗</a>
+                </div>
+                <pre data-code="pay"></pre>
+            </div>
+        </div>
+
+        <hr class="section-rule">
+
+        <div class="why">
+            <b>Run it yourself</b>
+            <span><code>npm install</code></span>
+            <span><code>npm run seed:demo</code></span>
+            <span><code>npm run dev</code></span>
+        </div>
+
+    </div>
+</section>
+
+
+<footer>
+    <div class="shell footer-grid">
+
+        <div class="foot-brand">
+            <a class="brand" href="#/product">
+                <img src="/logo/fork.svg" alt="" width="24" height="24">
+                <span>cognir<em>a</em></span>
+            </a>
+            <p>Artificial institutional memory. Answers reconstructed from your own records.</p>
+            <div class="socials">
+                <a
+                    class="icon-link"
+                    data-link="github"
+                    href="#"
+                    target="_blank"
+                    rel="noopener"
+                    aria-label="Cognira on GitHub"
+                    title="GitHub"
+                >
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                        <path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.5 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.69 5.4-5.25 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/>
+                    </svg>
+                </a>
+                <a
+                    class="icon-link"
+                    data-link="twitter"
+                    href="#"
+                    target="_blank"
+                    rel="noopener"
+                    aria-label="Cognira on Twitter"
+                    title="Twitter"
+                >
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                        <path d="M23 4.5a8.4 8.4 0 0 1-2.4.66A4.2 4.2 0 0 0 22.4 2.9a8.4 8.4 0 0 1-2.66 1.02A4.19 4.19 0 0 0 12.6 7.75a11.9 11.9 0 0 1-8.64-4.38 4.19 4.19 0 0 0 1.3 5.59A4.16 4.16 0 0 1 3.4 8.4v.05a4.19 4.19 0 0 0 3.36 4.11 4.2 4.2 0 0 1-1.89.07 4.19 4.19 0 0 0 3.91 2.91A8.4 8.4 0 0 1 2 17.27a11.86 11.86 0 0 0 6.42 1.88c7.7 0 11.92-6.38 11.92-11.91 0-.18 0-.36-.01-.54A8.5 8.5 0 0 0 23 4.5z"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <div class="foot-col">
+            <h4>Cognira</h4>
+            <ul>
+                <li><a href="#/product">Product</a></li>
+                <li><a href="#/workspace">Workspace</a></li>
+                <li><a href="#/demo">Demo &amp; source</a></li>
+                <li><a href="#/workspace" onclick="focusPricing();return false;">Pricing</a></li>
+            </ul>
+        </div>
+
+        <div class="foot-col">
+            <h4>Contact us</h4>
+            <form class="contact-form" id="contactForm" onsubmit="return sendContact(event)">
+                <div class="contact-row">
+                    <input id="cName" placeholder="Your name" autocomplete="name" required>
+                    <input id="cEmail" type="email" placeholder="Email" autocomplete="email" required>
+                </div>
+                <textarea
+                    id="cMessage"
+                    placeholder="What do you need? Questions, a bug, or something you want it to read."
+                    required
+                ></textarea>
+                <button id="cSend" class="btn-sm btn-block" type="submit">Send message</button>
+                <div id="contactStatus" class="status"></div>
+            </form>
+        </div>
+
+    </div>
+
+    <div class="shell foot-legal">
+        <span>© Cognira</span>
+        <span>Built to say when it does not know.</span>
+    </div>
+</footer>
+
+
+<script>
+
+
+/* -------------------------------------------------------------- utilities */
+
+
+function escapeHtml(value) {
+
+    return String(value === null || value === undefined ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+
+}
+
+
+const BASE58 =
+    "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
+
+/*
+ * Phantom speaks base58 for both signatures and serialised transactions.
+ * Twenty lines here beats shipping a bundler for one encoder.
+ */
+function base58Encode(bytes) {
+
+    if (bytes.length === 0) return "";
+
+    const digits = [0];
+
+    for (let i = 0; i < bytes.length; i++) {
+
+        let carry = bytes[i];
+
+        for (let j = 0; j < digits.length; j++) {
+            carry += digits[j] << 8;
+            digits[j] = carry % 58;
+            carry = (carry / 58) | 0;
+        }
+
+        while (carry > 0) {
+            digits.push(carry % 58);
+            carry = (carry / 58) | 0;
+        }
+
+    }
+
+    let out = "";
+
+    for (let i = 0; i < bytes.length && bytes[i] === 0; i++) out += "1";
+    for (let i = digits.length - 1; i >= 0; i--) out += BASE58[digits[i]];
+
+    return out;
+
+}
+
+
+function base64ToBytes(value) {
+
+    const binary = atob(value);
+    const bytes = new Uint8Array(binary.length);
+
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+
+    return bytes;
+
+}
+
+
+async function api(path, body) {
+
+    const options = { headers: {} };
+
+    if (body !== undefined) {
+        options.method = "POST";
+        options.headers["Content-Type"] = "application/json";
+        options.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(path, options);
+    const data = await response.json().catch(function () { return {}; });
+
+    if (!response.ok) {
+        const error = new Error(data.error || ("Request failed: " + response.status));
+        error.payload = data;
+        throw error;
+    }
+
+    return data;
+
+}
+
+
+/* --------------------------------------------------------------- routing */
+
+
+const ROUTES = ["product", "workspace", "demo"];
+
+
+/*
+ * Pricing lives inside the Workspace tab rather than on a page of its own, so
+ * "take me to pricing" means: switch to Workspace, then scroll to the strip.
+ */
+function focusPricing() {
+    scrollToInWorkspace("pricing", "center");
+}
+
+
+/*
+ * "Try the demo" must land on the thing you can actually try — the live chat —
+ * not the top of the Workspace tab, and not the Demo tab, which is the source
+ * code. Dropping someone at the top of a long page and letting them hunt for
+ * the input is how a demo loses the person it was built for.
+ */
+function tryDemo() {
+
+    scrollToInWorkspace("askCard", "center");
+
+    // Put the cursor in the box, so the next thing they do is type.
+    setTimeout(function () {
+        const input = document.getElementById("question");
+        if (input) input.focus({ preventScroll: true });
+    }, 500);
+
+}
+
+
+function scrollToInWorkspace(id, block) {
+
+    const scroll = function () {
+        const target = document.getElementById(id);
+        if (target) target.scrollIntoView({ behavior: "smooth", block: block });
+    };
+
+    if (currentRoute() === "workspace") {
+        scroll();
+    } else {
+        go("workspace");
+        // renderRoute jumps to the top on a route change; scroll after it.
+        setTimeout(scroll, 60);
+    }
+
+}
+
+
+function currentRoute() {
+
+    const name = (location.hash || "").replace(/^#\/?/, "");
+    return ROUTES.indexOf(name) === -1 ? "product" : name;
+
+}
+
+
+function go(route) {
+    location.hash = "#/" + route;
+}
+
+
+function renderRoute() {
+
+    const route = currentRoute();
+
+    ROUTES.forEach(function (name) {
+        document.getElementById("page-" + name)
+            .classList.toggle("current", name === route);
+    });
+
+    document.querySelectorAll(".tab").forEach(function (tab) {
+        tab.classList.toggle("current", tab.dataset.route === route);
+    });
+
+    document.title = route === "product"
+        ? "Cognira — institutional memory for how you decide"
+        : "Cognira — " + route.charAt(0).toUpperCase() + route.slice(1);
+
+    window.scrollTo({ top: 0, behavior: "auto" });
+
+}
+
+
+window.addEventListener("hashchange", renderRoute);
+
+
+/* ------------------------------------------------------------ app state */
+
+
+const state = {
+    wallet: null,
+    membership: null,
+    demo: { ready: false, remaining: 0, limit: 0 },
+    payments: { enabled: false, treasury: null }
+};
+
+
+function isMember() {
+    return Boolean(state.membership && state.membership.active);
+}
+
+
+async function refreshMe() {
+
+    try {
+        const me = await api("/api/me");
+        state.wallet = me.wallet;
+        state.membership = me.membership;
+        state.demo = me.demo;
+        state.payments = me.payments;
+    } catch (error) {
+        // Leave the defaults; render() will show the demo state.
+    }
+
+    render();
+
+}
+
+
+function render() {
+
+    const pill = document.getElementById("planPill");
+    const walletBtn = document.getElementById("walletBtn");
+    const banner = document.getElementById("banner");
+
+    if (state.wallet) {
+        walletBtn.textContent =
+            state.wallet.slice(0, 4) + "…" + state.wallet.slice(-4);
+        walletBtn.title = "Disconnect " + state.wallet;
+    } else {
+        walletBtn.textContent = "Connect wallet";
+        walletBtn.title = "";
+    }
+
+    // The pill only appears when it has something worth saying. Labelling an
+    // empty state "Demo" was clutter — the banner already says that.
+    if (isMember()) {
+        const days = state.membership.daysRemaining;
+        pill.textContent = days + " day" + (days === 1 ? "" : "s") + " left";
+        pill.className = "pill pill-active";
+        pill.style.display = "";
+    } else {
+        pill.style.display = "none";
+    }
+
+    if (isMember()) {
+
+        banner.classList.remove("show");
+
+    } else if (!state.demo.ready) {
+
+        banner.className = "banner show";
+        banner.innerHTML =
+            "<strong>The demo has not been loaded yet.</strong> "
+            + "Run <code>npm run seed:demo</code> to fill it with the sample "
+            + "workspace, then reload.";
+
+    } else {
+
+        banner.className = "banner show";
+        banner.innerHTML =
+            "<strong>You are in the demo.</strong> Answers come from a shared "
+            + "sample workspace — one payments decision recorded across Slack, "
+            + "a meeting note, a vendor email and a mail thread. <strong>"
+            + state.demo.remaining + " of " + state.demo.limit
+            + "</strong> questions left this hour. "
+            + '<a href="#/workspace" onclick="focusPricing();return false;">'
+            + "Get your own workspace →</a>";
+
+    }
+
+    // Keep the demo tier card honest about what is actually left.
+    const quotaLine = document.getElementById("tierDemoQuota");
+    if (quotaLine) {
+        quotaLine.textContent = isMember()
+            ? state.demo.limit + " questions an hour"
+            : state.demo.remaining + " of " + state.demo.limit
+              + " questions left this hour";
+    }
+
+    const demoTier = document.getElementById("tierDemo");
+    if (demoTier) demoTier.classList.toggle("tier-current", !isMember());
+
+    document.getElementById("knowledgeCard")
+        .classList.toggle("locked", !isMember());
+
+}
+
+
+/* ---------------------------------------------------------- wallet auth */
+
+
+function phantom() {
+
+    if (window.phantom && window.phantom.solana && window.phantom.solana.isPhantom) {
+        return window.phantom.solana;
+    }
+
+    if (window.solana && window.solana.isPhantom) {
+        return window.solana;
+    }
+
+    return null;
+
+}
+
+
+async function onWalletClick() {
+
+    if (state.wallet) {
+        await api("/api/auth/logout", {});
+        state.wallet = null;
+        state.membership = null;
+        await refreshMe();
+        await loadDecisions();
+        return;
+    }
+
+    await connectWallet();
+
+}
+
+
+async function connectWallet() {
+
+    const provider = phantom();
+    const button = document.getElementById("walletBtn");
+
+    if (!provider) {
+        setPayStatus(
+            "Phantom was not detected. Install the Phantom extension, then reload this page."
+        );
+        focusPricing();
+        window.open("https://phantom.app/download", "_blank", "noopener");
+        return;
+    }
+
+    button.disabled = true;
+
+    try {
+
+        const connection = await provider.connect();
+        const wallet = connection.publicKey.toString();
+
+        // The server picks the nonce, so a signature cannot be replayed.
+        const challenge = await api("/api/auth/challenge", { wallet: wallet });
+
+        const signed = await provider.signMessage(
+            new TextEncoder().encode(challenge.message),
+            "utf8"
+        );
+
+        await api("/api/auth/verify", {
+            wallet: wallet,
+            nonce: challenge.nonce,
+            signature: base58Encode(signed.signature)
+        });
+
+        setPayStatus("");
+        await refreshMe();
+        await loadDecisions();
+
+    } catch (error) {
+
+        // Phantom throws 4001 when the person closes the popup.
+        if (error && error.code === 4001) {
+            setPayStatus("Sign-in cancelled.");
+        } else {
+            setPayStatus(error.message || "Could not connect the wallet.");
+        }
+
+    } finally {
+
+        button.disabled = false;
+
+    }
+
+}
+
+
+/* -------------------------------------------------------------- pricing */
+
+
+function setPayStatus(text) {
+    document.getElementById("payStatus").innerText = text;
+}
+
+
+async function loadPlans() {
+
+    // The three tier cards are static markup now that pricing lives in the
+    // Workspace tab. This only reflects whether the server can take payment.
+    let data;
+    try {
+        data = await api("/api/plans");
+    } catch (error) {
+        setPayStatus("Could not reach the server to check pricing.");
+        return;
+    }
+
+    if (data.enabled) return;
+
+    ["buyMonth", "buyYear"].forEach(function (id) {
+        const button = document.getElementById(id);
+        if (!button) return;
+        button.disabled = true;
+        button.textContent = "Unavailable";
+    });
+
+    setPayStatus(
+        "Payments are off until TREASURY_WALLET is set in .env to the wallet that should receive USDC."
+    );
+
+}
+
+
+async function buyPlan(planId) {
+
+    if (!state.wallet) {
+        setPayStatus("Connect your wallet first.");
+        await connectWallet();
+        if (!state.wallet) return;
+    }
+
+    const provider = phantom();
+    if (!provider) {
+        setPayStatus("Phantom was not detected.");
+        return;
+    }
+
+    setPayStatus("Preparing the payment…");
+
+    try {
+
+        // The server builds the transfer; Phantom shows the amount and
+        // recipient, and nothing moves until the person approves it there.
+        const checkout = await api("/api/checkout", { plan: planId });
+
+        setPayStatus("Approve the payment in Phantom…");
+
+        const sent = await provider.request({
+            method: "signAndSendTransaction",
+            params: {
+                message: base58Encode(base64ToBytes(checkout.transactionBase64))
+            }
+        });
+
+        setPayStatus("Payment sent. Confirming on chain…");
+
+        const result = await confirmPayment(sent.signature, planId);
+
+        state.membership = result.membership;
+        render();
+
+        setPayStatus(
+            "Done. Your pass runs until "
+            + new Date(result.expiresAt).toLocaleDateString() + "."
+        );
+
+        await loadDecisions();
+
+    } catch (error) {
+
+        if (error && error.code === 4001) {
+            setPayStatus("Payment cancelled.");
+        } else {
+            setPayStatus(error.message || "Payment failed.");
+        }
+
+    }
+
+}
+
+
+/*
+ * A transaction is usually not queryable the instant Phantom returns, so this
+ * retries for about a minute before giving up. The signature is recorded once
+ * server-side, so retrying cannot double-credit.
+ */
+async function confirmPayment(signature, planId) {
+
+    let lastError = null;
+
+    for (let attempt = 0; attempt < 12; attempt++) {
+
+        try {
+
+            return await api("/api/payments/verify", {
+                signature: signature,
+                plan: planId
+            });
+
+        } catch (error) {
+
+            lastError = error;
+
+            if (!/has not confirmed yet/i.test(error.message || "")) throw error;
+
+            setPayStatus(
+                "Waiting for the network to confirm… (" + (attempt + 1) + "/12)"
+            );
+
+            await new Promise(function (resolve) { setTimeout(resolve, 5000); });
+
+        }
+
+    }
+
+    throw lastError || new Error("Could not confirm the payment.");
+
+}
+
+
+/* ------------------------------------------------------------ decisions */
+
+
+function renderList(items, className) {
+
+    if (!items || items.length === 0) {
+        return '<span class="faint">None recorded</span>';
+    }
+
+    const openTag = className ? '<li class="' + className + '">' : "<li>";
+
+    return '<ul class="listing">'
+        + items.map(function (item) { return openTag + item + "</li>"; }).join("")
+        + "</ul>";
+
+}
+
+
+function renderDecision(decision) {
+
+    const alternatives = renderList(
+        (decision.alternatives || []).map(function (alt) {
+            return "<strong>" + escapeHtml(alt.option) + "</strong> — "
+                + escapeHtml(alt.why_rejected);
+        }),
+        null
+    );
+
+    const assumptions = renderList(
+        (decision.assumptions || []).map(escapeHtml),
+        "assumption"
+    );
+
+    const people = (decision.people || []).length
+        ? escapeHtml(decision.people.join(", "))
+        : '<span class="faint">Not named</span>';
+
+    const sourceLabel = decision.documentSource
+        ? " (" + escapeHtml(decision.documentSource) + ")"
+        : "";
+
+    return '<div class="decision">'
+        + "<h3>" + escapeHtml(decision.decision) + "</h3>"
+        + "<p><strong>Why:</strong> " + escapeHtml(decision.reasoning) + "</p>"
+        + "<p><strong>Alternatives:</strong></p>" + alternatives
+        + "<p><strong>Assumptions:</strong></p>" + assumptions
+        + "<p><strong>People:</strong> " + people + "</p>"
+        + "<p><strong>Outcome:</strong> " + escapeHtml(decision.outcome) + "</p>"
+        + '<p class="confidence">Confidence ' + (decision.confidence * 100).toFixed(0) + "%</p>"
+        + '<p class="source">' + escapeHtml(decision.documentTitle) + sourceLabel
+        + " · decided " + escapeHtml(decision.decided_on) + "</p>"
+        + "</div>";
+
+}
+
+
+async function loadDecisions() {
+
+    const container = document.getElementById("decisions");
+    const scope = document.getElementById("decisionScope");
+
+    try {
+
+        const data = await api("/api/decisions");
+
+        scope.textContent = data.demo ? "Shared demo workspace" : "Your workspace";
+
+        if (!data.decisions || data.decisions.length === 0) {
+
+            container.innerHTML = isMember()
+                ? '<p class="muted">Nothing yet. Add a meeting note or email and '
+                  + "Cognira will pull the decisions out of it.</p>"
+                : '<p class="muted">The demo workspace is empty. '
+                  + "Run <code>npm run seed:demo</code> to load it.</p>";
+
+            return;
+
+        }
+
+        container.innerHTML = data.decisions.map(renderDecision).join("");
+
+    } catch (error) {
+
+        container.innerHTML =
+            '<p class="muted">Could not load decisions: '
+            + escapeHtml(error.message) + "</p>";
+
+    }
+
+}
+
+
+/* ----------------------------------------------------------- knowledge */
+
+
+async function addKnowledge() {
+
+    const title = document.getElementById("title").value;
+    const source = document.getElementById("source").value;
+    const content = document.getElementById("content").value;
+    const button = document.getElementById("addBtn");
+    const status = document.getElementById("addStatus");
+
+    if (!title || !content) {
+        status.innerText = "Enter a title and some content.";
+        return;
+    }
+
+    button.disabled = true;
+    status.innerText = "Cognira is reading the document…";
+
+    try {
+
+        const data = await api("/api/knowledge", {
+            title: title,
+            source: source,
+            content: content
+        });
+
+        status.innerText =
+            data.decisionsFound === 0
+                ? "Added. Cognira found no decisions in this document."
+                : "Added. Cognira extracted " + data.decisionsFound
+                  + (data.decisionsFound === 1 ? " decision." : " decisions.");
+
+        document.getElementById("title").value = "";
+        document.getElementById("source").value = "";
+        document.getElementById("content").value = "";
+
+        await loadDecisions();
+
+    } catch (error) {
+
+        status.innerText = error.message;
+
+    } finally {
+
+        button.disabled = false;
+
+    }
+
+}
+
+
+/* ---------------------------------------------------------------- chat */
+
+/*
+ * Two separate lists on purpose.
+ *
+ *   transcript   — everything shown on screen, including failed attempts
+ *   conversation — only completed exchanges, which is what the model replays
+ *                  as history. A question that errored never becomes context.
+ */
+
+const transcript = [];
+
+const conversation = [];
+
+
+const LABELS = { you: "You", cognira: "Cognira", error: "Error" };
+
+
+/*
+ * The run-sheet reports what happened rather than animating a fake progress
+ * bar. All three steps are one server call, so they light up together while
+ * it runs and are filled in with real counts when it returns.
+ */
+const RUNSHEET_DEFAULTS = [];
+
+
+function setRunsheet(mode, facts) {
+
+    const steps = document.querySelectorAll("#runsheet .runstep");
+    const first = document.getElementById("step1");
+
+    // Remember the resting wording once, so "idle" can put it back.
+    if (RUNSHEET_DEFAULTS.length === 0) {
+        steps.forEach(function (step) {
+            RUNSHEET_DEFAULTS.push(step.querySelector("span").textContent);
+        });
+    }
+
+    steps.forEach(function (step) {
+        step.classList.toggle("live", mode === "running");
+        step.classList.toggle("done", mode === "done");
+    });
+
+    if (mode === "idle") {
+        steps.forEach(function (step, i) {
+            step.querySelector("span").textContent = RUNSHEET_DEFAULTS[i];
+        });
+        return;
+    }
+
+    if (mode === "running") {
+        first.textContent = "Reading every document in the workspace";
+    } else if (mode === "done" && facts) {
+        first.textContent =
+            "Read " + facts.documents + " document"
+            + (facts.documents === 1 ? "" : "s") + " in the workspace";
+        steps[2].querySelector("span").textContent =
+            facts.sources > 0
+                ? "Reconstructed the decision from " + facts.sources
+                  + " source" + (facts.sources === 1 ? "" : "s")
+                  + " · confidence " + Math.round(facts.confidence * 100) + "%"
+                : "Reported that the record does not answer this";
+    }
+
+}
+
+
+/** Sample questions, so someone can try the demo without inventing a query. */
+function askSample(button) {
+
+    document.getElementById("question").value = button.textContent.trim();
+    askCognira();
+
+}
+
+
+function renderTranscript(pendingText) {
+
+    const container = document.getElementById("transcript");
+    const reset = document.getElementById("resetBtn");
+
+    const entries = transcript.map(function (entry) {
+
+        return '<div class="turn turn-' + entry.who + '">'
+            + '<span class="turn-label">' + LABELS[entry.who] + "</span>"
+            + escapeHtml(entry.text)
+            + "</div>";
+
+    });
+
+    if (pendingText) {
+        entries.push(
+            '<div class="turn turn-cognira turn-pending">'
+            + '<span class="turn-label">Cognira</span>'
+            + escapeHtml(pendingText)
+            + "</div>"
+        );
+    }
+
+    container.innerHTML = entries.join("");
+
+    const hasContent = entries.length > 0;
+
+    container.classList.toggle("active", hasContent);
+    reset.style.display = hasContent ? "block" : "none";
+    container.scrollTop = container.scrollHeight;
+
+}
+
+
+function resetConversation() {
+
+    transcript.length = 0;
+    conversation.length = 0;
+
+    setRunsheet("idle");
+    renderTranscript();
+
+    document.getElementById("question").focus();
+
+}
+
+
+async function askCognira() {
+
+    const input = document.getElementById("question");
+    const question = input.value.trim();
+    const button = document.getElementById("askBtn");
+
+    if (!question) {
+        input.focus();
+        return;
+    }
+
+    const history = conversation.slice();
+
+    transcript.push({ who: "you", text: question });
+
+    input.value = "";
+    button.disabled = true;
+
+    setRunsheet("running");
+
+    renderTranscript(
+        history.length === 0
+            ? "Reconstructing the decision…"
+            : "Thinking about that…"
+    );
+
+    try {
+
+        const data = await api("/api/ask", {
+            question: question,
+            history: history
+        });
+
+        transcript.push({ who: "cognira", text: data.answer });
+
+        conversation.push({ role: "user", content: question });
+        conversation.push({
+            role: "assistant",
+            content: data.raw || data.answer
+        });
+
+        setRunsheet("done", {
+            documents: data.documentsRead || 0,
+            sources: data.sourcesCited || 0,
+            confidence: data.confidence || 0
+        });
+
+        if (typeof data.demoRemaining === "number") {
+            state.demo.remaining = data.demoRemaining;
+            render();
+        }
+
+    } catch (error) {
+
+        setRunsheet("idle");
+        transcript.push({ who: "error", text: error.message });
+
+        // A 402 or 429 means the pricing tab is the useful next step.
+        if (error.payload && error.payload.needsPlan) {
+            setPayStatus(error.message);
+            focusPricing();
+        }
+
+    } finally {
+
+        button.disabled = false;
+        renderTranscript();
+        input.focus();
+
+    }
+
+}
+
+
+document.getElementById("question").addEventListener(
+    "keydown",
+    function (event) {
+
+        // Enter sends; Shift+Enter makes a new line.
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            askCognira();
+        }
+
+    }
+);
+
+
+/* ------------------------------------------------------- source excerpts */
+
+/*
+ * Real excerpts, copied from the files they are labelled with. If a visitor
+ * clones the repo these should match — a "here is the code" page that showed
+ * invented code would defeat its own purpose.
+ */
+const SNIPPETS = {
+
+    schema:
+`const DecisionSchema = z.object({
+  decision:     z.string(),   // stated in one sentence
+  reasoning:    z.string(),   // must trace back to the source text
+  alternatives: z.array(z.object({
+    option:       z.string(),
+    why_rejected: z.string(),
+  })),
+  people:      z.array(z.string()),
+  decided_on:  z.string(),           // YYYY-MM-DD, or "unknown"
+  assumptions: z.array(z.string()),  // taken as true, never verified
+  outcome:     z.string(),
+  evidence:    z.array(z.string()),  // verbatim quotes from the source
+  confidence:  z.number(),           // how well the text supports this
+});`,
+
+    prompt:
+`1. GROUND EVERYTHING. Every claim in "reasoning",
+   "alternatives", and "assumptions" must trace back to
+   something actually in the document. If the document says
+   Stripe was chosen but never says why, the reasoning is
+   "Not stated in this document" and the confidence is low.
+
+   Inventing plausible rationale is the single worst failure
+   mode here - a confidently wrong institutional memory is
+   more damaging than an empty one.`,
+
+    call:
+`const response = await client.messages.parse({
+  model: MODEL,
+  max_tokens: 16000,
+  system: SYSTEM_PROMPT,
+  thinking: { type: "adaptive" },
+  output_config: {
+    format: zodOutputFormat(ExtractionSchema),
+    effort: "high",
+  },
+  messages: [{ role: "user", content: userContent }],
+});`,
+
+    cache:
+`system: [
+  { type: "text", text: SYSTEM_PROMPT },
+  // Cache breakpoint sits after the corpus: stable across a
+  // conversation, invalidated only when a document is added.
+  { type: "text", text: context, cache_control: { type: "ephemeral" } },
+],`,
+
+    pay:
+`// Read the treasury's balance change straight off the chain,
+// rather than trusting anything the browser reported.
+const received = post
+  .filter((b) => b.mint === mint && b.owner === treasury)
+  .reduce((total, after) => {
+    const before = pre.find(
+      (b) => b.accountIndex === after.accountIndex && b.mint === mint,
+    );
+    const delta =
+      BigInt(after.uiTokenAmount.amount) - BigInt(before?.uiTokenAmount.amount ?? "0");
+    return total + (delta > 0n ? delta : 0n);
+  }, 0n);
+
+if (received < definition.amountBaseUnits) {
+  throw new PaymentError("That transaction paid less than the plan costs.");
+}`
+
+};
+
+
+const KEYWORDS =
+    /^(const|let|await|async|function|return|if|throw|new|import|from|export|interface|type|of|true|false|null)$/;
+
+
+/*
+ * Deliberately small: comments, strings, numbers and keywords, matched in one
+ * pass so the replacements cannot nest inside each other and mangle the code.
+ */
+function highlight(code) {
+
+    return escapeHtml(code).replace(
+        /(\/\/[^\n]*)|(&quot;(?:(?!&quot;)[^\n])*&quot;|'[^'\n]*')|(\b\d+n?\b)|([A-Za-z_$]+)/g,
+        function (match, comment, str, num, word) {
+
+            if (comment) return '<span class="tok-c">' + comment + "</span>";
+            if (str) return '<span class="tok-s">' + str + "</span>";
+            if (num) return '<span class="tok-n">' + num + "</span>";
+            if (word && KEYWORDS.test(word)) {
+                return '<span class="tok-k">' + word + "</span>";
+            }
+
+            return match;
+
+        }
+    );
+
+}
+
+
+function renderSnippets() {
+
+    document.querySelectorAll("pre[data-code]").forEach(function (block) {
+        const source = SNIPPETS[block.dataset.code];
+        if (source) block.innerHTML = highlight(source);
+    });
+
+}
+
+
+/* ---------------------------------------------------------------- links */
+
+/*
+ * Every outbound link in one place. Paste the Twitter URL in when the account
+ * exists — until then the icon renders visibly disabled rather than pointing
+ * at a dead page.
+ */
+const LINKS = {
+    github: "https://github.com/MalikEJohnson/Cognira",
+    twitter: ""
+};
+
+
+function applyLinks() {
+
+    document.querySelectorAll("[data-link]").forEach(function (anchor) {
+
+        const url = LINKS[anchor.dataset.link];
+
+        if (url) {
+            anchor.href = url;
+            anchor.removeAttribute("aria-disabled");
+        } else {
+            anchor.removeAttribute("href");
+            anchor.setAttribute("aria-disabled", "true");
+            anchor.title = anchor.title + " — link coming soon";
+        }
+
+    });
+
+}
+
+
+/* --------------------------------------------------------------- contact */
+
+
+async function sendContact(event) {
+
+    event.preventDefault();
+
+    const button = document.getElementById("cSend");
+    const status = document.getElementById("contactStatus");
+
+    const payload = {
+        name: document.getElementById("cName").value,
+        email: document.getElementById("cEmail").value,
+        message: document.getElementById("cMessage").value
+    };
+
+    button.disabled = true;
+    status.innerText = "Sending…";
+
+    try {
+
+        await api("/api/contact", payload);
+
+        status.innerText = "Thanks — we have it. We will reply to " + payload.email + ".";
+        document.getElementById("contactForm").reset();
+
+    } catch (error) {
+
+        status.innerText = error.message;
+
+    } finally {
+
+        button.disabled = false;
+
+    }
+
+    return false;
+
+}
+
+
+applyLinks();
+renderSnippets();
+renderRoute();
+refreshMe().then(loadDecisions).then(loadPlans);
+
+
+</script>
+
+
+</body>
+
+</html>
