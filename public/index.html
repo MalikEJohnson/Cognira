@@ -1139,8 +1139,9 @@
                 who argued for what, and the assumptions nobody checked.
             </p>
             <div class="hero-actions">
-                <button onclick="go('workspace')">Try the demo</button>
-                <button class="btn-ghost" onclick="go('pricing')">See pricing</button>
+                <button onclick="tryDemo()">Try the demo</button>
+                <button class="btn-ghost" onclick="focusPricing()">See pricing</button>
+                <button class="btn-ghost" onclick="go('demo')">Read the code</button>
             </div>
         </div>
 
@@ -1739,10 +1740,34 @@ const ROUTES = ["product", "workspace", "demo"];
  * "take me to pricing" means: switch to Workspace, then scroll to the strip.
  */
 function focusPricing() {
+    scrollToInWorkspace("pricing", "center");
+}
+
+
+/*
+ * "Try the demo" must land on the thing you can actually try — the live chat —
+ * not the top of the Workspace tab, and not the Demo tab, which is the source
+ * code. Dropping someone at the top of a long page and letting them hunt for
+ * the input is how a demo loses the person it was built for.
+ */
+function tryDemo() {
+
+    scrollToInWorkspace("askCard", "center");
+
+    // Put the cursor in the box, so the next thing they do is type.
+    setTimeout(function () {
+        const input = document.getElementById("question");
+        if (input) input.focus({ preventScroll: true });
+    }, 500);
+
+}
+
+
+function scrollToInWorkspace(id, block) {
 
     const scroll = function () {
-        const strip = document.getElementById("pricing");
-        if (strip) strip.scrollIntoView({ behavior: "smooth", block: "center" });
+        const target = document.getElementById(id);
+        if (target) target.scrollIntoView({ behavior: "smooth", block: block });
     };
 
     if (currentRoute() === "workspace") {
