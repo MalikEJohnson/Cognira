@@ -636,6 +636,207 @@
         .note h3 { margin-bottom: 8px; }
         .note p { margin: 0; color: var(--muted); font-size: 14.5px; }
 
+        /* ------------------------------------------- workspace: tier strip */
+
+        /* The whole strip is a link to the pricing tab — anything money-shaped
+           on this page should take you somewhere you can actually buy. */
+        .tier-strip {
+            cursor: pointer;
+            transition: border-color 0.15s ease;
+        }
+
+        .tier-strip:hover {
+            border-color: var(--border-strong);
+        }
+
+        .tiers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+            margin: 18px 0 20px;
+        }
+
+        .tier {
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            padding: 18px;
+            background: var(--bg);
+        }
+
+        .tier-current {
+            border-color: var(--accent-dim);
+            background: #100e1d;
+        }
+
+        .tier-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .tier-cost {
+            font-size: 1.9rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            margin: 4px 0 12px;
+        }
+
+        .tier-cost span {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--faint);
+            letter-spacing: 0;
+        }
+
+        .tier ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 13.5px;
+            color: var(--muted);
+        }
+
+        .tier li::before {
+            content: "✓ ";
+            color: var(--accent-soft);
+        }
+
+        .tier li.no::before {
+            content: "— ";
+            color: var(--faint);
+        }
+
+        .strip-cta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            flex-wrap: wrap;
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+            font-size: 14.5px;
+            color: var(--muted);
+        }
+
+        .strip-cta strong {
+            color: var(--accent-soft);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* ------------------------------------------- workspace: three-ups */
+
+        .three {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 18px;
+        }
+
+        .cap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px;
+        }
+
+        .cap h3 { margin-bottom: 8px; }
+
+        .cap p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14.5px;
+        }
+
+        .cap-icon {
+            display: block;
+            font-size: 20px;
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+
+        /* ------------------------------------------ workspace: demo steps */
+
+        .runsheet {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 18px;
+            padding: 16px 18px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            background: var(--bg);
+        }
+
+        .runstep {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 12px;
+            align-items: baseline;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .runstep b {
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            color: var(--faint);
+            font-weight: 500;
+        }
+
+        .runstep.live b { color: var(--accent-soft); }
+        .runstep.live { color: var(--text); }
+        .runstep.done b { color: #6fcf97; }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .chip {
+            background: var(--surface-raised);
+            border: 1px solid var(--border-strong);
+            color: var(--muted);
+            border-radius: 999px;
+            padding: 7px 13px;
+            font-size: 13.5px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            transition: color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .chip:hover {
+            color: var(--text);
+            border-color: var(--faint);
+            filter: none;
+        }
+
+        .why {
+            display: flex;
+            gap: 10px 26px;
+            flex-wrap: wrap;
+            align-items: baseline;
+            color: var(--muted);
+            font-size: 15px;
+        }
+
+        .why b {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .section-rule {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 14px 0 0;
+        }
+
         /* --------------------------------------------------------- footer */
 
         footer {
@@ -771,29 +972,157 @@
 <section class="page" id="page-workspace">
     <div class="shell stack">
 
-        <div>
+        <div style="text-align:center;">
             <span class="eyebrow">Workspace</span>
-            <h2 style="margin-top:10px;">Ask your decision memory</h2>
+            <h2 style="margin:10px 0 8px;">Your agent, working from your own records</h2>
+            <p class="lede" style="margin:0 auto;">
+                Ask why something happened. Cognira answers from what your
+                company already wrote down.
+            </p>
+        </div>
+
+        <!-- PRICING / DEMO — the whole strip links to the pricing tab -->
+        <div
+            class="panel tier-strip"
+            onclick="go('pricing')"
+            role="link"
+            tabindex="0"
+            onkeydown="if(event.key==='Enter'){go('pricing')}"
+        >
+
+            <div class="panel-head" style="margin-bottom:0;">
+                <h3>Pricing</h3>
+                <span class="faint" style="font-size:13.5px;">
+                    You are on the free demo
+                </span>
+            </div>
+
+            <div class="tiers">
+
+                <div class="tier tier-current" id="tierDemo">
+                    <div class="tier-name">Demo</div>
+                    <div class="tier-cost">$0</div>
+                    <ul>
+                        <li id="tierDemoQuota">5 questions an hour</li>
+                        <li>Shared sample workspace</li>
+                        <li class="no">Add your own sources</li>
+                        <li class="no">Private to you</li>
+                    </ul>
+                </div>
+
+                <div class="tier">
+                    <div class="tier-name">1 month</div>
+                    <div class="tier-cost">$20 <span>USDC</span></div>
+                    <ul>
+                        <li>Unlimited questions</li>
+                        <li>Your own private workspace</li>
+                        <li>Ingest folders, Slack, email, GitHub</li>
+                        <li>30 days</li>
+                    </ul>
+                </div>
+
+                <div class="tier">
+                    <div class="tier-name">1 year</div>
+                    <div class="tier-cost">$200 <span>USDC</span></div>
+                    <ul>
+                        <li>Everything in monthly</li>
+                        <li>$16.44 a month</li>
+                        <li>365 days</li>
+                        <li>Renewing early adds time</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="strip-cta">
+                <span>
+                    Passes are paid in USDC from your own wallet. Nothing
+                    auto-renews and no card is stored.
+                </span>
+                <strong>See all plans →</strong>
+            </div>
+
         </div>
 
         <div id="banner" class="banner"></div>
 
-        <div class="split">
+        <!-- WHAT YOUR AGENT CAN DO -->
+        <div>
+            <h2 style="text-align:center; margin-bottom:20px;">
+                What your agent can do
+            </h2>
+
+            <div class="three">
+
+                <div class="cap">
+                    <span class="cap-icon" aria-hidden="true">📥</span>
+                    <h3>Read what you already have</h3>
+                    <p>
+                        Folders, Slack and Gmail exports, Word files, PDFs, mail
+                        archives, GitHub commits and pull request threads.
+                    </p>
+                </div>
+
+                <div class="cap">
+                    <span class="cap-icon" aria-hidden="true">🧩</span>
+                    <h3>Extract the reasoning</h3>
+                    <p>
+                        Not just what was decided — the options that lost, why
+                        each lost, who drove it, and what nobody verified.
+                    </p>
+                </div>
+
+                <div class="cap">
+                    <span class="cap-icon" aria-hidden="true">💬</span>
+                    <h3>Answer why questions</h3>
+                    <p>
+                        Evidence assembled across every source, cited to the
+                        document it came from, with a confidence score.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SEE THE AGENT IN ACTION -->
+        <div>
+            <h2 style="text-align:center; margin-bottom:8px;">
+                See the agent in action
+            </h2>
+            <p class="lede" style="text-align:center; margin:0 auto 20px;">
+                The demo workspace holds one payments decision, recorded four
+                different ways. Ask about it and watch what the agent does.
+            </p>
 
             <div class="panel" id="askCard">
 
-                <div class="panel-head">
-                    <h3>Ask Cognira</h3>
-                    <span class="faint" style="font-size:13.5px;">
-                        Follow-ups keep the thread
-                    </span>
+                <!-- What actually happens on each question, stepped live -->
+                <div class="runsheet" id="runsheet">
+                    <div class="runstep" data-step="1">
+                        <b>01</b>
+                        <span id="step1">Reads every document in the workspace</span>
+                    </div>
+                    <div class="runstep" data-step="2">
+                        <b>02</b>
+                        <span>Connects evidence across Slack, email and meeting notes</span>
+                    </div>
+                    <div class="runstep" data-step="3">
+                        <b>03</b>
+                        <span>Reconstructs the decision, cites its sources, scores its confidence</span>
+                    </div>
+                </div>
+
+                <div class="chips" id="chips">
+                    <button class="chip" onclick="askSample(this)">Why did we choose Stripe?</button>
+                    <button class="chip" onclick="askSample(this)">What are we assuming that nobody checked?</button>
+                    <button class="chip" onclick="askSample(this)">Why was Adyen rejected?</button>
                 </div>
 
                 <div id="transcript" class="transcript"></div>
 
                 <textarea
                     id="question"
-                    placeholder="Why did we choose Stripe?"
+                    placeholder="Ask why something happened…"
                 ></textarea>
 
                 <div class="actions">
@@ -807,6 +1136,10 @@
                 </div>
 
             </div>
+        </div>
+
+        <!-- YOUR OWN WORKSPACE -->
+        <div class="split">
 
             <div class="panel locked" id="knowledgeCard">
 
@@ -828,20 +1161,33 @@
                 </div>
 
                 <div class="lock-note">
-                    Your own workspace needs a pass. The demo is shared and
+                    Your own workspace needs a pass — the demo is shared and
                     read-only, so nothing you added here would stay private.
+                    <br><br>
+                    <button class="btn-sm" onclick="go('pricing')">
+                        Unlock from $20
+                    </button>
                 </div>
 
             </div>
 
+            <div class="panel">
+                <div class="panel-head">
+                    <h3>Decision memory</h3>
+                    <span id="decisionScope" class="faint" style="font-size:13.5px;"></span>
+                </div>
+                <div id="decisions"><p class="muted">Loading…</p></div>
+            </div>
+
         </div>
 
-        <div class="panel">
-            <div class="panel-head">
-                <h3>Decision memory</h3>
-                <span id="decisionScope" class="faint" style="font-size:13.5px;"></span>
-            </div>
-            <div id="decisions"><p class="muted">Loading…</p></div>
+        <!-- WHY -->
+        <hr class="section-rule">
+        <div class="why">
+            <b>Why Cognira</b>
+            <span><b>Grounded</b> — every claim traces to a document</span>
+            <span><b>Honest</b> — says when the record does not say</span>
+            <span><b>Yours</b> — private workspace, your own sources</span>
         </div>
 
     </div>
@@ -1125,9 +1471,22 @@ function render() {
             + "sample workspace — one payments decision recorded across Slack, "
             + "a meeting note, a vendor email and a mail thread. <strong>"
             + state.demo.remaining + " of " + state.demo.limit
-            + "</strong> questions left this hour.";
+            + "</strong> questions left this hour. "
+            + '<a href="#/pricing">Get your own workspace →</a>';
 
     }
+
+    // Keep the demo tier card honest about what is actually left.
+    const quotaLine = document.getElementById("tierDemoQuota");
+    if (quotaLine) {
+        quotaLine.textContent = isMember()
+            ? state.demo.limit + " questions an hour"
+            : state.demo.remaining + " of " + state.demo.limit
+              + " questions left this hour";
+    }
+
+    const demoTier = document.getElementById("tierDemo");
+    if (demoTier) demoTier.classList.toggle("tier-current", !isMember());
 
     document.getElementById("knowledgeCard")
         .classList.toggle("locked", !isMember());
@@ -1537,6 +1896,64 @@ const conversation = [];
 const LABELS = { you: "You", cognira: "Cognira", error: "Error" };
 
 
+/*
+ * The run-sheet reports what happened rather than animating a fake progress
+ * bar. All three steps are one server call, so they light up together while
+ * it runs and are filled in with real counts when it returns.
+ */
+const RUNSHEET_DEFAULTS = [];
+
+
+function setRunsheet(mode, facts) {
+
+    const steps = document.querySelectorAll("#runsheet .runstep");
+    const first = document.getElementById("step1");
+
+    // Remember the resting wording once, so "idle" can put it back.
+    if (RUNSHEET_DEFAULTS.length === 0) {
+        steps.forEach(function (step) {
+            RUNSHEET_DEFAULTS.push(step.querySelector("span").textContent);
+        });
+    }
+
+    steps.forEach(function (step) {
+        step.classList.toggle("live", mode === "running");
+        step.classList.toggle("done", mode === "done");
+    });
+
+    if (mode === "idle") {
+        steps.forEach(function (step, i) {
+            step.querySelector("span").textContent = RUNSHEET_DEFAULTS[i];
+        });
+        return;
+    }
+
+    if (mode === "running") {
+        first.textContent = "Reading every document in the workspace";
+    } else if (mode === "done" && facts) {
+        first.textContent =
+            "Read " + facts.documents + " document"
+            + (facts.documents === 1 ? "" : "s") + " in the workspace";
+        steps[2].querySelector("span").textContent =
+            facts.sources > 0
+                ? "Reconstructed the decision from " + facts.sources
+                  + " source" + (facts.sources === 1 ? "" : "s")
+                  + " · confidence " + Math.round(facts.confidence * 100) + "%"
+                : "Reported that the record does not answer this";
+    }
+
+}
+
+
+/** Sample questions, so someone can try the demo without inventing a query. */
+function askSample(button) {
+
+    document.getElementById("question").value = button.textContent.trim();
+    askCognira();
+
+}
+
+
 function renderTranscript(pendingText) {
 
     const container = document.getElementById("transcript");
@@ -1576,6 +1993,7 @@ function resetConversation() {
     transcript.length = 0;
     conversation.length = 0;
 
+    setRunsheet("idle");
     renderTranscript();
 
     document.getElementById("question").focus();
@@ -1601,6 +2019,8 @@ async function askCognira() {
     input.value = "";
     button.disabled = true;
 
+    setRunsheet("running");
+
     renderTranscript(
         history.length === 0
             ? "Reconstructing the decision…"
@@ -1622,6 +2042,12 @@ async function askCognira() {
             content: data.raw || data.answer
         });
 
+        setRunsheet("done", {
+            documents: data.documentsRead || 0,
+            sources: data.sourcesCited || 0,
+            confidence: data.confidence || 0
+        });
+
         if (typeof data.demoRemaining === "number") {
             state.demo.remaining = data.demoRemaining;
             render();
@@ -1629,6 +2055,7 @@ async function askCognira() {
 
     } catch (error) {
 
+        setRunsheet("idle");
         transcript.push({ who: "error", text: error.message });
 
         // A 402 or 429 means the pricing tab is the useful next step.

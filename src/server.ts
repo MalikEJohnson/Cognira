@@ -10,7 +10,7 @@ import {
   MAX_HISTORY_TURNS,
   type ChatTurn,
 } from "./ask.js";
-import { listDecisions, saveDocumentWithDecisions } from "./store.js";
+import { documentCount, listDecisions, saveDocumentWithDecisions } from "./store.js";
 import {
   AuthError,
   createChallenge,
@@ -345,6 +345,10 @@ app.post("/api/ask", async (req, res) => {
       raw: result.answer,
       found: result.found,
       confidence: result.confidence,
+      // What the run actually touched, so the UI can report it rather than
+      // animate a progress bar that means nothing.
+      documentsRead: documentCount(owner),
+      sourcesCited: result.sources.length,
       demo: !member,
       demoRemaining: client ? checkDemoQuota(client).remaining : null,
     });
