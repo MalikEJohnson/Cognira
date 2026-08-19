@@ -1,0 +1,17 @@
+From dana@example.com Mon Mar 16 10:00:00 2026
+From: dana@example.com
+Subject: Launch date locked
+Date: Mon, 16 Mar 2026 10:00:00 +0000
+Message-ID: <m1@example.com>
+
+Locking June 12 for launch. Stripe integration starts today.
+
+From marcus@example.com Tue Mar 17 08:30:00 2026
+From: marcus@example.com
+Subject: Re: Launch date locked
+Date: Tue, 17 Mar 2026 08:30:00 +0000
+Message-ID: <m2@example.com>
+Content-Transfer-Encoding: quoted-printable
+
+Agreed =E2=80=94 but note we are assuming volume stays under 10k/month,
+which is where Stripe pricing stays favourable.
