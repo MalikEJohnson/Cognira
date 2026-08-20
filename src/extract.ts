@@ -87,7 +87,7 @@ export async function extractDecisions(input: {
     "Extract every decision this document records.",
   ].join("\n");
 
-  const response = await client.messages.parse({
+  const response = await client().messages.parse({
     model: MODEL,
     max_tokens: 16000,
     system: SYSTEM_PROMPT,

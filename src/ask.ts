@@ -123,7 +123,7 @@ export async function answerFrom(
 
   const recent = history.slice(-MAX_HISTORY_TURNS);
 
-  const response = await client.messages.parse({
+  const response = await client().messages.parse({
     model: MODEL,
     max_tokens: 16000,
     system: [

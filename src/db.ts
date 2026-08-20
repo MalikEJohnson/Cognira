@@ -31,9 +31,16 @@ function connect(): Client {
     // libSQL will not create the directory for us, and a fresh clone has no
     // data/ folder because it is gitignored.
     if (local.startsWith("file:")) {
-      mkdirSync(path.dirname(fileURLToPath(new URL(local, pathToFileURL(`${process.cwd()}/`)))), {
-        recursive: true,
-      });
+      try {
+        mkdirSync(
+          path.dirname(fileURLToPath(new URL(local, pathToFileURL(`${process.cwd()}/`)))),
+          { recursive: true },
+        );
+      } catch {
+        // A read-only filesystem means this is a serverless host with no
+        // TURSO_DATABASE_URL configured. Let the connection fail with its own
+        // message rather than dying here on a mkdir.
+      }
     }
 
     return createClient({ url: local });

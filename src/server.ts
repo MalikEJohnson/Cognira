@@ -2,7 +2,7 @@ import "dotenv/config";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express, { type Request, type Response } from "express";
-import { assertCredentials, describeApiError } from "./claude.js";
+import { describeApiError } from "./claude.js";
 import { extractDecisions } from "./extract.js";
 import {
   askCognira,
@@ -35,8 +35,31 @@ import {
   recordDemoQuestion,
 } from "./demo.js";
 
-assertCredentials();
-// Fire and forget: a housekeeping sweep must not delay the first request.
+/**
+ * Nothing here may throw at import time. On a serverless host an import-time
+ * error becomes an opaque FUNCTION_INVOCATION_FAILED with no way to say what
+ * was actually wrong, so configuration is checked per request instead and
+ * reported as a readable message.
+ */
+function configError(): string | null {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return "ANTHROPIC_API_KEY is not set. Add it in your host's environment variables and redeploy.";
+  }
+  if (process.env.VERCEL && !process.env.TURSO_DATABASE_URL) {
+    return "TURSO_DATABASE_URL is not set. A serverless host has no writable disk, so the database must be remote. Create one at turso.tech and add TURSO_DATABASE_URL and TURSO_AUTH_TOKEN.";
+  }
+  return null;
+}
+
+/** Blocks a route that cannot work, with a message that says why. */
+function blockedByConfig(res: Response): boolean {
+  const problem = configError();
+  if (!problem) return false;
+  res.status(503).json({ error: problem });
+  return true;
+}
+
+// Housekeeping, but never at the cost of the first request failing to import.
 void pruneExpired().catch((err) => console.error("[prune]", err));
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -82,6 +105,32 @@ async function requireAccess(req: Request, res: Response): Promise<User | null> 
 
   return user;
 }
+
+/**
+ * Reports what is and is not configured. Deliberately reveals no secret
+ * values — only whether each one is present — so it is safe to leave public.
+ */
+app.get("/api/health", async (_req, res) => {
+  const checks: Record<string, unknown> = {
+    anthropicKey: Boolean(process.env.ANTHROPIC_API_KEY),
+    tursoUrl: Boolean(process.env.TURSO_DATABASE_URL),
+    tursoToken: Boolean(process.env.TURSO_AUTH_TOKEN),
+    treasuryWallet: Boolean(process.env.TREASURY_WALLET),
+    serverless: Boolean(process.env.VERCEL),
+    nodeVersion: process.version,
+  };
+
+  try {
+    const demo = await demoUser();
+    checks.database = "connected";
+    checks.demoDocuments = await documentCount(demo.id);
+  } catch (err) {
+    checks.database = "FAILED: " + (err instanceof Error ? err.message : String(err));
+  }
+
+  const problem = configError();
+  res.status(problem ? 503 : 200).json({ ok: !problem, problem, checks });
+});
 
 // ------------------------------------------------------------------ identity
 
@@ -255,6 +304,8 @@ app.get("/api/decisions", async (req, res) => {
 });
 
 app.post("/api/knowledge", async (req, res) => {
+  if (blockedByConfig(res)) return;
+
   const user = await requireAccess(req, res);
   if (!user) return;
 
@@ -314,6 +365,8 @@ app.post("/api/ask", async (req, res) => {
     res.status(400).json({ error: "Ask a question first." });
     return;
   }
+
+  if (blockedByConfig(res)) return;
 
   const user = await currentUser(req);
   const member = user !== null && (await hasAccess(user.id));

@@ -15,7 +15,20 @@ export function assertCredentials(): void {
   }
 }
 
-export const client = new Anthropic();
+let cached: Anthropic | null = null;
+
+/**
+ * Built on first use, never at import time.
+ *
+ * The SDK constructor throws when no API key is present. At module scope on a
+ * serverless host that becomes an opaque FUNCTION_INVOCATION_FAILED before any
+ * route can run, so the error can never be reported. Deferring it means a
+ * missing key surfaces as a readable message from the route that needed it.
+ */
+export function client(): Anthropic {
+  if (!cached) cached = new Anthropic();
+  return cached;
+}
 
 /** Turns an SDK error into a message that is safe and useful to show a user. */
 export function describeApiError(err: unknown): string {
