@@ -5,7 +5,7 @@ import {
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { db } from "./db.js";
+import { one, run } from "./db.js";
 import { grantMembership, PLANS, type PlanId } from "./membership.js";
 
 /**
@@ -156,9 +156,10 @@ export async function verifyAndGrant(input: {
     throw new PaymentError("That does not look like a Solana transaction signature.");
   }
 
-  const alreadyClaimed = db()
-    .prepare("SELECT user_id FROM payments WHERE signature = ?")
-    .get(input.signature) as unknown as { user_id: string } | undefined;
+  const alreadyClaimed = await one<{ user_id: string }>(
+    "SELECT user_id FROM payments WHERE signature = ?",
+    [input.signature],
+  );
 
   if (alreadyClaimed) {
     throw new PaymentError("That payment has already been credited.");
@@ -227,23 +228,22 @@ export async function verifyAndGrant(input: {
   // call twice. If two requests race, the second insert throws and no second
   // pass is granted.
   try {
-    db()
-      .prepare(
-        `INSERT INTO payments (signature, user_id, plan, amount_base_units, payer_wallet, verified_at)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-      )
-      .run(
+    await run(
+      `INSERT INTO payments (signature, user_id, plan, amount_base_units, payer_wallet, verified_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
         input.signature,
         input.userId,
         input.plan,
         Number(received),
         input.wallet,
         new Date().toISOString(),
-      );
+      ],
+    );
   } catch {
     throw new PaymentError("That payment has already been credited.");
   }
 
-  const membership = grantMembership(input.userId, input.plan, input.signature);
+  const membership = await grantMembership(input.userId, input.plan, input.signature);
   return { expiresAt: membership.expiresAt };
 }

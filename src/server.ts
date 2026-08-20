@@ -36,7 +36,8 @@ import {
 } from "./demo.js";
 
 assertCredentials();
-pruneExpired();
+// Fire and forget: a housekeeping sweep must not delay the first request.
+void pruneExpired().catch((err) => console.error("[prune]", err));
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -52,13 +53,13 @@ function sessionToken(req: Request): string | undefined {
   return readCookie(req.headers.cookie, SESSION_COOKIE);
 }
 
-function currentUser(req: Request): User | null {
+function currentUser(req: Request): Promise<User | null> {
   return userForSession(sessionToken(req));
 }
 
 /** 401s when nobody is signed in. */
-function requireUser(req: Request, res: Response): User | null {
-  const user = currentUser(req);
+async function requireUser(req: Request, res: Response): Promise<User | null> {
+  const user = await currentUser(req);
   if (!user) {
     res.status(401).json({ error: "Connect your wallet first." });
     return null;
@@ -67,11 +68,11 @@ function requireUser(req: Request, res: Response): User | null {
 }
 
 /** 402s when signed in but without a live pass. */
-function requireAccess(req: Request, res: Response): User | null {
-  const user = requireUser(req, res);
+async function requireAccess(req: Request, res: Response): Promise<User | null> {
+  const user = await requireUser(req, res);
   if (!user) return null;
 
-  if (!hasAccess(user.id)) {
+  if (!(await hasAccess(user.id))) {
     res.status(402).json({
       error: "This needs an active pass. Pick a plan to unlock your own workspace.",
       needsPlan: true,
@@ -84,16 +85,16 @@ function requireAccess(req: Request, res: Response): User | null {
 
 // ------------------------------------------------------------------ identity
 
-app.get("/api/me", (req, res) => {
-  const user = currentUser(req);
+app.get("/api/me", async (req, res) => {
+  const user = await currentUser(req);
   const config = safely(() => paymentConfig());
 
   res.json({
     wallet: user?.wallet ?? null,
-    membership: user ? membershipStatus(user.id) : null,
+    membership: user ? await membershipStatus(user.id) : null,
     demo: {
-      ready: demoIsReady(),
-      ...checkDemoQuota(demoClientKey(req.ip, req.get("user-agent"))),
+      ready: await demoIsReady(),
+      ...(await checkDemoQuota(demoClientKey(req.ip, req.get("user-agent")))),
     },
     payments: {
       enabled: config !== null,
@@ -111,7 +112,7 @@ function safely<T>(fn: () => T): T | null {
   }
 }
 
-app.post("/api/auth/challenge", (req, res) => {
+app.post("/api/auth/challenge", async (req, res) => {
   const { wallet } = req.body ?? {};
 
   if (!isValidWallet(wallet)) {
@@ -119,10 +120,10 @@ app.post("/api/auth/challenge", (req, res) => {
     return;
   }
 
-  res.json(createChallenge(wallet));
+  res.json(await createChallenge(wallet));
 });
 
-app.post("/api/auth/verify", (req, res) => {
+app.post("/api/auth/verify", async (req, res) => {
   const { wallet, nonce, signature } = req.body ?? {};
 
   if (typeof nonce !== "string" || typeof signature !== "string") {
@@ -131,8 +132,8 @@ app.post("/api/auth/verify", (req, res) => {
   }
 
   try {
-    const user = verifyChallenge({ wallet, nonce, signature });
-    const session = createSession(user.id);
+    const user = await verifyChallenge({ wallet, nonce, signature });
+    const session = await createSession(user.id);
 
     res.cookie(SESSION_COOKIE, session.token, {
       httpOnly: true,
@@ -142,7 +143,7 @@ app.post("/api/auth/verify", (req, res) => {
       path: "/",
     });
 
-    res.json({ wallet: user.wallet, membership: membershipStatus(user.id) });
+    res.json({ wallet: user.wallet, membership: await membershipStatus(user.id) });
   } catch (err) {
     if (err instanceof AuthError) {
       res.status(400).json({ error: err.message });
@@ -153,8 +154,8 @@ app.post("/api/auth/verify", (req, res) => {
   }
 });
 
-app.post("/api/auth/logout", (req, res) => {
-  destroySession(sessionToken(req));
+app.post("/api/auth/logout", async (req, res) => {
+  await destroySession(sessionToken(req));
   res.clearCookie(SESSION_COOKIE, { path: "/" });
   res.json({ ok: true });
 });
@@ -181,7 +182,7 @@ app.get("/api/plans", (_req, res) => {
 });
 
 app.post("/api/checkout", async (req, res) => {
-  const user = requireUser(req, res);
+  const user = await requireUser(req, res);
   if (!user) return;
 
   const { plan } = req.body ?? {};
@@ -203,7 +204,7 @@ app.post("/api/checkout", async (req, res) => {
 });
 
 app.post("/api/payments/verify", async (req, res) => {
-  const user = requireUser(req, res);
+  const user = await requireUser(req, res);
   if (!user) return;
 
   const { signature, plan } = req.body ?? {};
@@ -219,7 +220,11 @@ app.post("/api/payments/verify", async (req, res) => {
       wallet: user.wallet,
       plan,
     });
-    res.json({ ok: true, expiresAt: granted.expiresAt, membership: membershipStatus(user.id) });
+    res.json({
+      ok: true,
+      expiresAt: granted.expiresAt,
+      membership: await membershipStatus(user.id),
+    });
   } catch (err) {
     if (err instanceof PaymentError) {
       res.status(400).json({ error: err.message });
@@ -232,15 +237,16 @@ app.post("/api/payments/verify", async (req, res) => {
 
 // ----------------------------------------------------------------- knowledge
 
-app.get("/api/decisions", (req, res) => {
-  const user = currentUser(req);
-
+app.get("/api/decisions", async (req, res) => {
   try {
+    const user = await currentUser(req);
+    const member = user !== null && (await hasAccess(user.id));
+
     // Signed out, the page shows the demo corpus so there is something to look at.
-    const owner = user && hasAccess(user.id) ? user.id : demoUser().id;
+    const owner = member ? user!.id : (await demoUser()).id;
     res.json({
-      decisions: listDecisions(owner),
-      demo: !user || !hasAccess(user.id),
+      decisions: await listDecisions(owner),
+      demo: !member,
     });
   } catch (err) {
     console.error("[/api/decisions]", err);
@@ -249,7 +255,7 @@ app.get("/api/decisions", (req, res) => {
 });
 
 app.post("/api/knowledge", async (req, res) => {
-  const user = requireAccess(req, res);
+  const user = await requireAccess(req, res);
   if (!user) return;
 
   const { title, source, content } = req.body ?? {};
@@ -272,7 +278,7 @@ app.post("/api/knowledge", async (req, res) => {
       content,
     });
 
-    const { decisions } = saveDocumentWithDecisions(
+    const { decisions } = await saveDocumentWithDecisions(
       user.id,
       { title: title.trim(), source: cleanSource, content },
       extracted,
@@ -309,14 +315,14 @@ app.post("/api/ask", async (req, res) => {
     return;
   }
 
-  const user = currentUser(req);
-  const member = user !== null && hasAccess(user.id);
+  const user = await currentUser(req);
+  const member = user !== null && (await hasAccess(user.id));
 
   // Anyone without a pass is answered from the shared demo corpus, and every
   // one of those questions costs the operator money, so it is capped here.
   let client: string | null = null;
   if (!member) {
-    if (!demoIsReady()) {
+    if (!(await demoIsReady())) {
       res.status(503).json({
         error: "The demo has not been set up yet. Run `npm run seed:demo` to load it.",
       });
@@ -324,7 +330,7 @@ app.post("/api/ask", async (req, res) => {
     }
 
     client = demoClientKey(req.ip, req.get("user-agent"));
-    const quota = checkDemoQuota(client);
+    const quota = await checkDemoQuota(client);
 
     if (!quota.allowed) {
       res.status(429).json({
@@ -336,10 +342,10 @@ app.post("/api/ask", async (req, res) => {
   }
 
   try {
-    const owner = member ? user!.id : demoUser().id;
+    const owner = member ? user!.id : (await demoUser()).id;
     const result = await askCognira(owner, question.trim(), parseHistory(history));
 
-    if (client) recordDemoQuestion(client);
+    if (client) await recordDemoQuestion(client);
 
     res.json({
       answer: formatAnswer(result),
@@ -348,10 +354,10 @@ app.post("/api/ask", async (req, res) => {
       confidence: result.confidence,
       // What the run actually touched, so the UI can report it rather than
       // animate a progress bar that means nothing.
-      documentsRead: documentCount(owner),
+      documentsRead: await documentCount(owner),
       sourcesCited: result.sources.length,
       demo: !member,
-      demoRemaining: client ? checkDemoQuota(client).remaining : null,
+      demoRemaining: client ? (await checkDemoQuota(client)).remaining : null,
     });
   } catch (err) {
     console.error("[/api/ask]", err);
@@ -361,7 +367,7 @@ app.post("/api/ask", async (req, res) => {
 
 // ------------------------------------------------------------------- contact
 
-app.post("/api/contact", (req, res) => {
+app.post("/api/contact", async (req, res) => {
   const { name, email, message } = req.body ?? {};
 
   if (typeof name !== "string" || typeof email !== "string" || typeof message !== "string") {
@@ -370,9 +376,9 @@ app.post("/api/contact", (req, res) => {
   }
 
   try {
-    const user = currentUser(req);
+    const user = await currentUser(req);
 
-    saveContactMessage({
+    await saveContactMessage({
       name,
       email,
       message,
@@ -391,13 +397,25 @@ app.post("/api/contact", (req, res) => {
   }
 });
 
-const port = Number(process.env.PORT ?? 3000);
-app.listen(port, () => {
-  console.log(`Cognira running at http://localhost:${port}`);
-  if (!paymentConfig()) {
-    console.log("Payments disabled — set TREASURY_WALLET in .env to enable them.");
-  }
-  if (!demoIsReady()) {
-    console.log("Demo corpus empty — run `npm run seed:demo` to load it.");
-  }
-});
+export default app;
+
+/**
+ * Only bind a port when this is run as a process. On Vercel the app is
+ * imported by api/index.ts and invoked per request, where calling listen()
+ * would be meaningless — so local dev and serverless share one file.
+ */
+if (!process.env.VERCEL) {
+  const port = Number(process.env.PORT ?? 3000);
+
+  app.listen(port, async () => {
+    console.log(`Cognira running at http://localhost:${port}`);
+
+    if (!safely(() => paymentConfig())) {
+      console.log("Payments disabled — set TREASURY_WALLET in .env to enable them.");
+    }
+
+    if (!(await demoIsReady())) {
+      console.log("Demo corpus empty — run: npm run seed:demo");
+    }
+  });
+}

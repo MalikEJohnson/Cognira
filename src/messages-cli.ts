@@ -10,7 +10,7 @@ import { listContactMessages } from "./db.js";
  * provider to configure and nothing silently fails in the background.
  */
 
-const messages = listContactMessages();
+const messages = await listContactMessages();
 
 if (messages.length === 0) {
   console.log("\nNo messages yet.\n");

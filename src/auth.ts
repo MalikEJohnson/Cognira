@@ -1,7 +1,7 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { ed25519 } from "@noble/curves/ed25519.js";
 import bs58 from "bs58";
-import { db } from "./db.js";
+import { all, one, run } from "./db.js";
 
 /**
  * Sign-in with a Solana wallet (Phantom).
@@ -51,16 +51,17 @@ export function challengeMessage(wallet: string, nonce: string, issuedAt: string
   ].join("\n");
 }
 
-export function createChallenge(wallet: string): { nonce: string; message: string } {
+export async function createChallenge(
+  wallet: string,
+): Promise<{ nonce: string; message: string }> {
   const nonce = randomBytes(24).toString("base64url");
   const issuedAt = new Date().toISOString();
   const expiresAt = new Date(Date.now() + CHALLENGE_TTL_MS).toISOString();
 
-  db()
-    .prepare(
-      "INSERT INTO challenges (nonce, wallet, issued_at, expires_at, used) VALUES (?, ?, ?, ?, 0)",
-    )
-    .run(nonce, wallet, issuedAt, expiresAt);
+  await run(
+    "INSERT INTO challenges (nonce, wallet, issued_at, expires_at, used) VALUES (?, ?, ?, ?, 0)",
+    [nonce, wallet, issuedAt, expiresAt],
+  );
 
   return { nonce, message: challengeMessage(wallet, nonce, issuedAt) };
 }
@@ -71,18 +72,21 @@ export class AuthError extends Error {}
  * Verifies a signed challenge and returns the user it belongs to, creating the
  * user on first sign-in. Throws AuthError with a message safe to show.
  */
-export function verifyChallenge(input: {
+export async function verifyChallenge(input: {
   wallet: string;
   nonce: string;
   signature: string;
-}): User {
+}): Promise<User> {
   if (!isValidWallet(input.wallet)) throw new AuthError("That is not a valid Solana wallet address.");
 
-  const row = db()
-    .prepare("SELECT wallet, issued_at, expires_at, used FROM challenges WHERE nonce = ?")
-    .get(input.nonce) as unknown as
-    | { wallet: string; issued_at: string; expires_at: string; used: number }
-    | undefined;
+  const row = await one<{
+    wallet: string;
+    issued_at: string;
+    expires_at: string;
+    used: number;
+  }>("SELECT wallet, issued_at, expires_at, used FROM challenges WHERE nonce = ?", [
+    input.nonce,
+  ]);
 
   if (!row) throw new AuthError("Sign-in request not found. Start again.");
   if (row.used) throw new AuthError("That sign-in request was already used. Start again.");
@@ -106,20 +110,20 @@ export function verifyChallenge(input: {
 
   // Burn the nonce whether or not the signature checked out, so a bad
   // signature cannot be retried against the same challenge.
-  db().prepare("UPDATE challenges SET used = 1 WHERE nonce = ?").run(input.nonce);
+  await run("UPDATE challenges SET used = 1 WHERE nonce = ?", [input.nonce]);
 
   if (!ok) throw new AuthError("Signature did not match that wallet.");
 
   return upsertUser(input.wallet);
 }
 
-export function upsertUser(wallet: string, isDemo = false): User {
-  const handle = db();
-  const existing = handle
-    .prepare("SELECT id, wallet, created_at, is_demo FROM users WHERE wallet = ?")
-    .get(wallet) as unknown as
-    | { id: string; wallet: string; created_at: string; is_demo: number }
-    | undefined;
+export async function upsertUser(wallet: string, isDemo = false): Promise<User> {
+  const existing = await one<{
+    id: string;
+    wallet: string;
+    created_at: string;
+    is_demo: number;
+  }>("SELECT id, wallet, created_at, is_demo FROM users WHERE wallet = ?", [wallet]);
 
   if (existing) {
     return {
@@ -137,9 +141,12 @@ export function upsertUser(wallet: string, isDemo = false): User {
     isDemo,
   };
 
-  handle
-    .prepare("INSERT INTO users (id, wallet, created_at, is_demo) VALUES (?, ?, ?, ?)")
-    .run(user.id, user.wallet, user.createdAt, isDemo ? 1 : 0);
+  await run("INSERT INTO users (id, wallet, created_at, is_demo) VALUES (?, ?, ?, ?)", [
+    user.id,
+    user.wallet,
+    user.createdAt,
+    isDemo ? 1 : 0,
+  ]);
 
   return user;
 }
@@ -151,36 +158,40 @@ function hashToken(token: string): string {
 }
 
 /** Issues a session and returns the raw token to set as a cookie. */
-export function createSession(userId: string): { token: string; expiresAt: Date } {
+export async function createSession(
+  userId: string,
+): Promise<{ token: string; expiresAt: Date }> {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
 
-  db()
-    .prepare(
-      "INSERT INTO sessions (token_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)",
-    )
-    .run(hashToken(token), userId, new Date().toISOString(), expiresAt.toISOString());
+  await run(
+    "INSERT INTO sessions (token_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)",
+    [hashToken(token), userId, new Date().toISOString(), expiresAt.toISOString()],
+  );
 
   return { token, expiresAt };
 }
 
-export function userForSession(token: string | undefined): User | null {
+export async function userForSession(token: string | undefined): Promise<User | null> {
   if (!token) return null;
 
-  const row = db()
-    .prepare(
-      `SELECT u.id, u.wallet, u.created_at, u.is_demo, s.expires_at
-         FROM sessions s JOIN users u ON u.id = s.user_id
-        WHERE s.token_hash = ?`,
-    )
-    .get(hashToken(token)) as unknown as
-    | { id: string; wallet: string; created_at: string; is_demo: number; expires_at: string }
-    | undefined;
+  const row = await one<{
+    id: string;
+    wallet: string;
+    created_at: string;
+    is_demo: number;
+    expires_at: string;
+  }>(
+    `SELECT u.id, u.wallet, u.created_at, u.is_demo, s.expires_at
+       FROM sessions s JOIN users u ON u.id = s.user_id
+      WHERE s.token_hash = ?`,
+    [hashToken(token)],
+  );
 
   if (!row) return null;
 
   if (new Date(row.expires_at).getTime() < Date.now()) {
-    destroySession(token);
+    await destroySession(token);
     return null;
   }
 
@@ -192,16 +203,16 @@ export function userForSession(token: string | undefined): User | null {
   };
 }
 
-export function destroySession(token: string | undefined): void {
+export async function destroySession(token: string | undefined): Promise<void> {
   if (!token) return;
-  db().prepare("DELETE FROM sessions WHERE token_hash = ?").run(hashToken(token));
+  await run("DELETE FROM sessions WHERE token_hash = ?", [hashToken(token)]);
 }
 
 /** Clears expired sessions and challenges. Cheap enough to run on boot. */
-export function pruneExpired(): void {
+export async function pruneExpired(): Promise<void> {
   const now = new Date().toISOString();
-  db().prepare("DELETE FROM sessions WHERE expires_at < ?").run(now);
-  db().prepare("DELETE FROM challenges WHERE expires_at < ?").run(now);
+  await run("DELETE FROM sessions WHERE expires_at < ?", [now]);
+  await run("DELETE FROM challenges WHERE expires_at < ?", [now]);
 }
 
 /** Minimal cookie header parser — avoids a dependency for five lines of work. */

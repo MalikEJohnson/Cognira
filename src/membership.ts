@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { db } from "./db.js";
+import { one, run } from "./db.js";
 
 /**
  * Access passes, not subscriptions.
@@ -68,18 +68,20 @@ export interface MembershipStatus {
 }
 
 /** The pass with the furthest expiry, if it has not lapsed. */
-export function activeMembership(userId: string): Membership | null {
-  const row = db()
-    .prepare(
-      `SELECT id, plan, starts_at, expires_at
-         FROM memberships
-        WHERE user_id = ? AND expires_at > ?
-        ORDER BY expires_at DESC
-        LIMIT 1`,
-    )
-    .get(userId, new Date().toISOString()) as unknown as
-    | { id: string; plan: PlanId; starts_at: string; expires_at: string }
-    | undefined;
+export async function activeMembership(userId: string): Promise<Membership | null> {
+  const row = await one<{
+    id: string;
+    plan: PlanId;
+    starts_at: string;
+    expires_at: string;
+  }>(
+    `SELECT id, plan, starts_at, expires_at
+       FROM memberships
+      WHERE user_id = ? AND expires_at > ?
+      ORDER BY expires_at DESC
+      LIMIT 1`,
+    [userId, new Date().toISOString()],
+  );
 
   if (!row) return null;
 
@@ -91,8 +93,8 @@ export function activeMembership(userId: string): Membership | null {
   };
 }
 
-export function membershipStatus(userId: string): MembershipStatus {
-  const membership = activeMembership(userId);
+export async function membershipStatus(userId: string): Promise<MembershipStatus> {
+  const membership = await activeMembership(userId);
 
   if (!membership) {
     return { active: false, plan: null, expiresAt: null, daysRemaining: 0 };
@@ -108,21 +110,21 @@ export function membershipStatus(userId: string): MembershipStatus {
   };
 }
 
-export function hasAccess(userId: string): boolean {
-  return activeMembership(userId) !== null;
+export async function hasAccess(userId: string): Promise<boolean> {
+  return (await activeMembership(userId)) !== null;
 }
 
 /**
  * Grants a pass. `signature` is the on-chain payment it came from and is
  * UNIQUE in the schema, so a replayed transaction cannot buy a second pass.
  */
-export function grantMembership(
+export async function grantMembership(
   userId: string,
   plan: PlanId,
   signature: string | null,
-): Membership {
+): Promise<Membership> {
   const definition = PLANS[plan];
-  const existing = activeMembership(userId);
+  const existing = await activeMembership(userId);
 
   // Renewing early stacks onto the remaining time instead of discarding it.
   const startsAt = existing ? new Date(existing.expiresAt) : new Date();
@@ -135,11 +137,10 @@ export function grantMembership(
     expiresAt: expiresAt.toISOString(),
   };
 
-  db()
-    .prepare(
-      "INSERT INTO memberships (id, user_id, plan, starts_at, expires_at, signature) VALUES (?, ?, ?, ?, ?, ?)",
-    )
-    .run(membership.id, userId, plan, membership.startsAt, membership.expiresAt, signature);
+  await run(
+    "INSERT INTO memberships (id, user_id, plan, starts_at, expires_at, signature) VALUES (?, ?, ?, ?, ?, ?)",
+    [membership.id, userId, plan, membership.startsAt, membership.expiresAt, signature],
+  );
 
   return membership;
 }

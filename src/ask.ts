@@ -166,7 +166,7 @@ export async function askCognira(
   question: string,
   history: ChatTurn[] = [],
 ): Promise<AskResult> {
-  return answerFrom(loadCorpus(userId), question, history);
+  return answerFrom(await loadCorpus(userId), question, history);
 }
 
 /** Renders an AskResult into the plain text the front end displays. */

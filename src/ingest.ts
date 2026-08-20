@@ -59,7 +59,7 @@ export async function ingest(
 
   // Seeded from what is already stored, then grown as this run proceeds — so
   // duplicates within a single run are caught too.
-  const seenHashes = knownContentHashes(userId);
+  const seenHashes = await knownContentHashes(userId);
 
   let inFlight = 0;
   let stopped = false;
@@ -85,7 +85,7 @@ export async function ingest(
           content: doc.content,
         });
 
-        saveDocumentWithDecisions(
+        await saveDocumentWithDecisions(
           userId,
           {
             title: doc.title,

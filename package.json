@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1",
+    "@libsql/client": "^0.17.4",
     "@noble/curves": "^2.3.0",
     "@solana/spl-token": "^0.4.15",
     "@solana/web3.js": "^1.98.4",
@@ -23,8 +24,8 @@
     "express": "^5.2.1",
     "mammoth": "^1.12.1",
     "pdfjs-dist": "^6.2.108",
-    "zod": "^4.4.3",
-    "tsx": "^4.23.12"
+    "tsx": "^4.23.12",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",

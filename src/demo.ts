@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { db } from "./db.js";
+import { all, run } from "./db.js";
 import { upsertUser, type User } from "./auth.js";
 import { documentCount } from "./store.js";
 
@@ -22,12 +22,13 @@ function questionsPerHour(): number {
   return Number.isFinite(configured) && configured >= 0 ? configured : 5;
 }
 
-export function demoUser(): User {
+export async function demoUser(): Promise<User> {
   return upsertUser(DEMO_WALLET, true);
 }
 
-export function demoIsReady(): boolean {
-  return documentCount(demoUser().id) > 0;
+export async function demoIsReady(): Promise<boolean> {
+  const user = await demoUser();
+  return (await documentCount(user.id)) > 0;
 }
 
 /**
@@ -49,16 +50,17 @@ export interface DemoQuota {
   retryAfterMinutes: number;
 }
 
-export function checkDemoQuota(client: string): DemoQuota {
+export async function checkDemoQuota(client: string): Promise<DemoQuota> {
   const limit = questionsPerHour();
   const since = new Date(Date.now() - WINDOW_MS).toISOString();
 
   // Opportunistic cleanup keeps the table from growing without a cron job.
-  db().prepare("DELETE FROM demo_usage WHERE asked_at < ?").run(since);
+  await run("DELETE FROM demo_usage WHERE asked_at < ?", [since]);
 
-  const rows = db()
-    .prepare("SELECT asked_at FROM demo_usage WHERE client = ? AND asked_at >= ? ORDER BY asked_at ASC")
-    .all(client, since) as unknown as { asked_at: string }[];
+  const rows = await all<{ asked_at: string }>(
+    "SELECT asked_at FROM demo_usage WHERE client = ? AND asked_at >= ? ORDER BY asked_at ASC",
+    [client, since],
+  );
 
   const used = rows.length;
   const oldest = rows[0]?.asked_at;
@@ -75,8 +77,9 @@ export function checkDemoQuota(client: string): DemoQuota {
   };
 }
 
-export function recordDemoQuestion(client: string): void {
-  db()
-    .prepare("INSERT INTO demo_usage (client, asked_at) VALUES (?, ?)")
-    .run(client, new Date().toISOString());
+export async function recordDemoQuestion(client: string): Promise<void> {
+  await run("INSERT INTO demo_usage (client, asked_at) VALUES (?, ?)", [
+    client,
+    new Date().toISOString(),
+  ]);
 }

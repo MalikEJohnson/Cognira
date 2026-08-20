@@ -128,7 +128,7 @@ function buildSources(args: Args): Source[] {
 
 /** Lists what each source would hand over, without calling the model. */
 async function dryRun(sources: Source[], userId: string, limit?: number): Promise<void> {
-  const seen = knownContentHashes(userId);
+  const seen = await knownContentHashes(userId);
   let candidates = 0;
   let skipped = 0;
   let characters = 0;
@@ -191,7 +191,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const owner = upsertUser(args.wallet);
+  const owner = await upsertUser(args.wallet);
 
   if (args.dryRun) {
     await dryRun(sources, owner.id, args.limit);

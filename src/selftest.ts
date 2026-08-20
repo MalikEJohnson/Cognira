@@ -148,8 +148,10 @@ async function main(): Promise<void> {
     const workspace = path.join(here, "..", "samples", "workspace");
     const scratchDir = await fs.mkdtemp(path.join(os.tmpdir(), "cognira-selftest-"));
     // Point the database at a throwaway file so the real one is untouched.
-    process.env.COGNIRA_DB = path.join(scratchDir, "test.db");
-    const tester = upsertUser("selftest");
+    // libSQL takes a URL, so a Windows path needs forward slashes.
+    process.env.COGNIRA_DB =
+      "file:" + path.join(scratchDir, "test.db").split(path.sep).join("/");
+    const tester = await upsertUser("selftest");
 
     const result = await ingest(tester.id, [folderSource(workspace)], { concurrency: 3 });
 

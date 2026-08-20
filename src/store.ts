@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { db } from "./db.js";
+import { all, batch, one } from "./db.js";
 
 export interface Alternative {
   option: string;
@@ -115,54 +115,59 @@ function toDocument(row: DocumentRow): KnowledgeDoc {
   };
 }
 
-export function listDecisions(userId: string): Decision[] {
-  const rows = db()
-    .prepare(
-      "SELECT * FROM decisions WHERE user_id = ? ORDER BY extracted_at DESC, rowid DESC",
-    )
-    .all(userId) as unknown as DecisionRow[];
+export async function listDecisions(userId: string): Promise<Decision[]> {
+  const rows = await all<DecisionRow>(
+    "SELECT * FROM decisions WHERE user_id = ? ORDER BY extracted_at DESC, rowid DESC",
+    [userId],
+  );
   return rows.map(toDecision);
 }
 
-export function listDocuments(userId: string): KnowledgeDoc[] {
-  const rows = db()
-    .prepare("SELECT * FROM documents WHERE user_id = ? ORDER BY added_at ASC")
-    .all(userId) as unknown as DocumentRow[];
+export async function listDocuments(userId: string): Promise<KnowledgeDoc[]> {
+  const rows = await all<DocumentRow>(
+    "SELECT * FROM documents WHERE user_id = ? ORDER BY added_at ASC",
+    [userId],
+  );
   return rows.map(toDocument);
 }
 
 /** Everything one person has stored, which is what an answer is reasoned from. */
-export function loadCorpus(userId: string): Corpus {
-  return { documents: listDocuments(userId), decisions: listDecisions(userId) };
+export async function loadCorpus(userId: string): Promise<Corpus> {
+  const [documents, decisions] = await Promise.all([
+    listDocuments(userId),
+    listDecisions(userId),
+  ]);
+  return { documents, decisions };
 }
 
-export function documentCount(userId: string): number {
-  const row = db()
-    .prepare("SELECT COUNT(*) AS n FROM documents WHERE user_id = ?")
-    .get(userId) as unknown as { n: number };
-  return row.n;
+export async function documentCount(userId: string): Promise<number> {
+  const row = await one<{ n: number }>(
+    "SELECT COUNT(*) AS n FROM documents WHERE user_id = ?",
+    [userId],
+  );
+  return row?.n ?? 0;
 }
 
 /**
  * Every content hash this user already has. Ingestion loads it once up front
  * rather than querying per candidate document.
  */
-export function knownContentHashes(userId: string): Set<string> {
-  const rows = db()
-    .prepare("SELECT content_hash FROM documents WHERE user_id = ?")
-    .all(userId) as unknown as { content_hash: string }[];
+export async function knownContentHashes(userId: string): Promise<Set<string>> {
+  const rows = await all<{ content_hash: string }>(
+    "SELECT content_hash FROM documents WHERE user_id = ?",
+    [userId],
+  );
   return new Set(rows.map((r) => r.content_hash));
 }
 
-export function saveDocumentWithDecisions(
+export async function saveDocumentWithDecisions(
   userId: string,
   doc: Omit<KnowledgeDoc, "id" | "addedAt">,
   extracted: Omit<
     Decision,
     "id" | "documentId" | "documentTitle" | "documentSource" | "extractedAt"
   >[],
-): { document: KnowledgeDoc; decisions: Decision[] } {
-  const handle = db();
+): Promise<{ document: KnowledgeDoc; decisions: Decision[] }> {
   const now = new Date().toISOString();
 
   const document: KnowledgeDoc = {
@@ -182,16 +187,13 @@ export function saveDocumentWithDecisions(
     extractedAt: now,
   }));
 
-  // The document and its decisions land together or not at all.
-  handle.exec("BEGIN");
-  try {
-    handle
-      .prepare(
-        `INSERT INTO documents
-           (id, user_id, title, source, content, added_at, source_id, external_id, content_hash)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .run(
+  // One transaction: the document and its decisions land together or not at all.
+  await batch([
+    {
+      sql: `INSERT INTO documents
+              (id, user_id, title, source, content, added_at, source_id, external_id, content_hash)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
         document.id,
         userId,
         document.title,
@@ -201,17 +203,14 @@ export function saveDocumentWithDecisions(
         document.sourceId ?? null,
         document.externalId ?? null,
         document.contentHash!,
-      );
-
-    const insertDecision = handle.prepare(
-      `INSERT INTO decisions
-         (id, user_id, document_id, document_title, document_source, decision, reasoning,
-          alternatives, people, decided_on, assumptions, outcome, evidence, confidence, extracted_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    );
-
-    for (const d of decisions) {
-      insertDecision.run(
+      ],
+    },
+    ...decisions.map((d) => ({
+      sql: `INSERT INTO decisions
+              (id, user_id, document_id, document_title, document_source, decision, reasoning,
+               alternatives, people, decided_on, assumptions, outcome, evidence, confidence, extracted_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
         d.id,
         userId,
         d.documentId,
@@ -227,14 +226,9 @@ export function saveDocumentWithDecisions(
         JSON.stringify(d.evidence),
         d.confidence,
         d.extractedAt,
-      );
-    }
-
-    handle.exec("COMMIT");
-  } catch (err) {
-    handle.exec("ROLLBACK");
-    throw err;
-  }
+      ],
+    })),
+  ]);
 
   return { document, decisions };
 }

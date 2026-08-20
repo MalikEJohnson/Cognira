@@ -22,7 +22,7 @@ async function main(): Promise<void> {
   assertCredentials();
 
   const workspace = path.join(here, "..", "samples", "workspace");
-  const user = demoUser();
+  const user = await demoUser();
 
   console.log(`Seeding the demo from ${workspace}`);
 

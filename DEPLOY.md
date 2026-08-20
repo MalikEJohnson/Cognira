@@ -1,6 +1,44 @@
 # Deploying Cognira
 
-## Read this before choosing Vercel
+## Vercel
+
+The app now runs on Vercel. Two things made that possible:
+
+- **The database moved off disk.** It is still SQLite, but served over HTTP by
+  Turso instead of read from a local file. A serverless function has no
+  writable disk and is thrown away after each request, so a `.db` file could
+  never have survived there.
+- **`vercel.json` raises the function timeout.** Extraction and answering are
+  single Claude calls that can run 30-120 seconds.
+
+Steps:
+
+1. Create a free database at **https://turso.tech**, then press **Create
+   Token** on it.
+2. In the Vercel project, add these environment variables:
+
+       ANTHROPIC_API_KEY
+       TURSO_DATABASE_URL
+       TURSO_AUTH_TOKEN
+       NODE_ENV=production
+       TRUST_PROXY=1
+       DEMO_SALT=<any random string>
+
+   Plus `TREASURY_WALLET` and `SOLANA_RPC_URL` when you want payments live.
+3. Redeploy.
+4. Seed the demo once, from your own machine, pointing at the same database:
+
+       npm run seed:demo
+
+   With `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` in your local `.env`,
+   this writes straight into the deployed database.
+
+**One caveat.** On the Hobby plan, functions cap at 60 seconds regardless of
+what `vercel.json` asks for. Most questions finish inside that; extracting a
+very large document may not. Pro raises it to 300s. Container hosts have no
+such limit at all — see below.
+
+## The container option
 
 Cognira is a **stateful, long-running server**. Two things about it decide
 where it can be hosted:
@@ -75,24 +113,6 @@ it once against the deployed instance:
 
 On Fly that is `fly ssh console -C "npm run seed:demo"`; on Railway/Render use
 their shell. Until it runs, the site loads and says the demo is empty.
-
-## If it has to be Vercel
-
-Three changes are needed, in this order:
-
-1. **Replace SQLite with hosted Postgres** (Vercel Postgres, Neon, Supabase).
-   Everything database-shaped is already isolated in `src/db.ts`, so this is a
-   contained rewrite of that one file plus the query call sites — not a
-   redesign. This is the non-negotiable one; without it the app loses all data
-   on every deploy.
-2. **Raise the function timeout.** Set `maxDuration` for the API routes to the
-   highest your plan allows, and expect the longest extractions to still be at
-   risk. Moving ingestion to a queue is the real fix.
-3. **Serve Express through Vercel's Node runtime**, or split the routes into
-   individual serverless functions.
-
-The static front end would be very happy on Vercel. It is the server behind it
-that does not fit the model.
 
 ## Before taking real money
 
