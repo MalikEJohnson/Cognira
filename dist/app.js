@@ -122,12 +122,16 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { randomUUID } from "node:crypto";
+function env(name) {
+  const value = process.env[name]?.trim();
+  return value ? value : void 0;
+}
 var client2 = null;
 var ready = null;
 async function connect() {
-  const url = process.env.TURSO_DATABASE_URL?.trim();
+  const url = env("TURSO_DATABASE_URL");
   if (!url) {
-    const local = process.env.COGNIRA_DB ?? "file:./data/cognira.db";
+    const local = env("COGNIRA_DB") ?? "file:./data/cognira.db";
     if (local.startsWith("file:")) {
       try {
         mkdirSync(
@@ -140,7 +144,7 @@ async function connect() {
     const { createClient: createClient2 } = await import("@libsql/client");
     return createClient2({ url: local });
   }
-  const authToken = process.env.TURSO_AUTH_TOKEN?.trim();
+  const authToken = env("TURSO_AUTH_TOKEN");
   if (!authToken && !url.startsWith("file:")) {
     throw new Error(
       "TURSO_DATABASE_URL is set but TURSO_AUTH_TOKEN is missing. Create a token in the Turso dashboard and add it to .env."
@@ -801,7 +805,7 @@ var MAX_PAYMENT_AGE_MS = 24 * 60 * 60 * 1e3;
 var PaymentError = class extends Error {
 };
 function paymentConfig() {
-  const treasury = process.env.TREASURY_WALLET?.trim();
+  const treasury = process.env.TREASURY_WALLET?.trim() || void 0;
   if (!treasury) return null;
   try {
     return {
@@ -985,10 +989,10 @@ async function recordDemoQuestion(client3) {
 
 // src/server.ts
 function configError() {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.ANTHROPIC_API_KEY?.trim()) {
     return "ANTHROPIC_API_KEY is not set. Add it in your host's environment variables and redeploy.";
   }
-  if (process.env.VERCEL && !process.env.TURSO_DATABASE_URL) {
+  if (process.env.VERCEL && !process.env.TURSO_DATABASE_URL?.trim()) {
     return "TURSO_DATABASE_URL is not set. A serverless host has no writable disk, so the database must be remote. Create one at turso.tech and add TURSO_DATABASE_URL and TURSO_AUTH_TOKEN.";
   }
   return null;
@@ -1034,10 +1038,10 @@ async function requireAccess(req, res) {
 }
 app.get("/api/health", async (_req, res) => {
   const checks = {
-    anthropicKey: Boolean(process.env.ANTHROPIC_API_KEY),
-    tursoUrl: Boolean(process.env.TURSO_DATABASE_URL),
-    tursoToken: Boolean(process.env.TURSO_AUTH_TOKEN),
-    treasuryWallet: Boolean(process.env.TREASURY_WALLET),
+    anthropicKey: Boolean(process.env.ANTHROPIC_API_KEY?.trim()),
+    tursoUrl: Boolean(process.env.TURSO_DATABASE_URL?.trim()),
+    tursoToken: Boolean(process.env.TURSO_AUTH_TOKEN?.trim()),
+    treasuryWallet: Boolean(process.env.TREASURY_WALLET?.trim()),
     serverless: Boolean(process.env.VERCEL),
     nodeVersion: process.version
   };

@@ -18,6 +18,16 @@ import type { Client, InValue } from "@libsql/client";
  * Everything a person owns carries a user_id and every read filters on it.
  */
 
+/**
+ * A variable declared in a hosting dashboard but left blank arrives as an
+ * empty string, not undefined — so ?? happily accepts it and the app tries to
+ * connect to "". Treat blank as absent.
+ */
+function env(name: string): string | undefined {
+  const value = process.env[name]?.trim();
+  return value ? value : undefined;
+}
+
 let client: Client | null = null;
 let ready: Promise<Client> | null = null;
 
@@ -33,11 +43,11 @@ let ready: Promise<Client> | null = null;
  * and local development keeps working against a file.
  */
 async function connect(): Promise<Client> {
-  const url = process.env.TURSO_DATABASE_URL?.trim();
+  const url = env("TURSO_DATABASE_URL");
 
   if (!url) {
     // Local development: a plain file, no account or network needed.
-    const local = process.env.COGNIRA_DB ?? "file:./data/cognira.db";
+    const local = env("COGNIRA_DB") ?? "file:./data/cognira.db";
 
     // libSQL will not create the directory for us, and a fresh clone has no
     // data/ folder because it is gitignored.
@@ -58,7 +68,7 @@ async function connect(): Promise<Client> {
     return createClient({ url: local });
   }
 
-  const authToken = process.env.TURSO_AUTH_TOKEN?.trim();
+  const authToken = env("TURSO_AUTH_TOKEN");
 
   if (!authToken && !url.startsWith("file:")) {
     throw new Error(

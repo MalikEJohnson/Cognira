@@ -40,7 +40,7 @@ export interface PaymentConfig {
 
 /** Returns null when payments are not configured, so the app can still run. */
 export function paymentConfig(): PaymentConfig | null {
-  const treasury = process.env.TREASURY_WALLET?.trim();
+  const treasury = process.env.TREASURY_WALLET?.trim() || undefined;
   if (!treasury) return null;
 
   try {

@@ -42,10 +42,10 @@ import {
  * reported as a readable message.
  */
 function configError(): string | null {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.ANTHROPIC_API_KEY?.trim()) {
     return "ANTHROPIC_API_KEY is not set. Add it in your host's environment variables and redeploy.";
   }
-  if (process.env.VERCEL && !process.env.TURSO_DATABASE_URL) {
+  if (process.env.VERCEL && !process.env.TURSO_DATABASE_URL?.trim()) {
     return "TURSO_DATABASE_URL is not set. A serverless host has no writable disk, so the database must be remote. Create one at turso.tech and add TURSO_DATABASE_URL and TURSO_AUTH_TOKEN.";
   }
   return null;
@@ -112,10 +112,10 @@ async function requireAccess(req: Request, res: Response): Promise<User | null> 
  */
 app.get("/api/health", async (_req, res) => {
   const checks: Record<string, unknown> = {
-    anthropicKey: Boolean(process.env.ANTHROPIC_API_KEY),
-    tursoUrl: Boolean(process.env.TURSO_DATABASE_URL),
-    tursoToken: Boolean(process.env.TURSO_AUTH_TOKEN),
-    treasuryWallet: Boolean(process.env.TREASURY_WALLET),
+    anthropicKey: Boolean(process.env.ANTHROPIC_API_KEY?.trim()),
+    tursoUrl: Boolean(process.env.TURSO_DATABASE_URL?.trim()),
+    tursoToken: Boolean(process.env.TURSO_AUTH_TOKEN?.trim()),
+    treasuryWallet: Boolean(process.env.TREASURY_WALLET?.trim()),
     serverless: Boolean(process.env.VERCEL),
     nodeVersion: process.version,
   };
