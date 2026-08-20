@@ -33,5 +33,10 @@
     "@types/node": "^24.13.3",
     "typescript": "^5.9.3",
     "esbuild": "^0.28.2"
+  },
+  "overrides": {
+    "rpc-websockets": {
+      "uuid": "^9.0.1"
+    }
   }
 }
