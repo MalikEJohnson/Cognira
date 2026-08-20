@@ -2,7 +2,7 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { randomUUID } from "node:crypto";
-import { createClient, type Client, type InValue } from "@libsql/client";
+import type { Client, InValue } from "@libsql/client";
 
 /**
  * The database, over libSQL.
@@ -21,7 +21,18 @@ import { createClient, type Client, type InValue } from "@libsql/client";
 let client: Client | null = null;
 let ready: Promise<Client> | null = null;
 
-function connect(): Client {
+/**
+ * Two entry points, chosen at runtime.
+ *
+ * "@libsql/client" loads a native .node binary to support local files. Those
+ * binaries frequently fail to get traced into a serverless bundle, which
+ * shows up as a function that crashes the moment it is invoked.
+ *
+ * "@libsql/client/web" is pure HTTP with no native code, which is all a remote
+ * Turso database ever needs — so serverless never touches the native path,
+ * and local development keeps working against a file.
+ */
+async function connect(): Promise<Client> {
   const url = process.env.TURSO_DATABASE_URL?.trim();
 
   if (!url) {
@@ -43,6 +54,7 @@ function connect(): Client {
       }
     }
 
+    const { createClient } = await import("@libsql/client");
     return createClient({ url: local });
   }
 
@@ -54,6 +66,7 @@ function connect(): Client {
     );
   }
 
+  const { createClient } = await import("@libsql/client/web");
   return createClient({ url, authToken });
 }
 
@@ -66,7 +79,7 @@ export function db(): Promise<Client> {
   if (ready) return ready;
 
   ready = (async () => {
-    client = connect();
+    client = await connect();
     await migrate(client);
     return client;
   })().catch((err) => {

@@ -122,10 +122,9 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { randomUUID } from "node:crypto";
-import { createClient } from "@libsql/client";
 var client2 = null;
 var ready = null;
-function connect() {
+async function connect() {
   const url = process.env.TURSO_DATABASE_URL?.trim();
   if (!url) {
     const local = process.env.COGNIRA_DB ?? "file:./data/cognira.db";
@@ -138,7 +137,8 @@ function connect() {
       } catch {
       }
     }
-    return createClient({ url: local });
+    const { createClient: createClient2 } = await import("@libsql/client");
+    return createClient2({ url: local });
   }
   const authToken = process.env.TURSO_AUTH_TOKEN?.trim();
   if (!authToken && !url.startsWith("file:")) {
@@ -146,12 +146,13 @@ function connect() {
       "TURSO_DATABASE_URL is set but TURSO_AUTH_TOKEN is missing. Create a token in the Turso dashboard and add it to .env."
     );
   }
+  const { createClient } = await import("@libsql/client/web");
   return createClient({ url, authToken });
 }
 function db() {
   if (ready) return ready;
   ready = (async () => {
-    client2 = connect();
+    client2 = await connect();
     await migrate(client2);
     return client2;
   })().catch((err) => {
