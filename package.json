@@ -11,7 +11,8 @@
     "selftest": "tsx src/selftest.ts",
     "ingest": "tsx src/ingest-cli.ts",
     "seed:demo": "tsx src/seed-demo.ts",
-    "messages": "tsx src/messages-cli.ts"
+    "messages": "tsx src/messages-cli.ts",
+    "build": "node scripts/build-function.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1",
@@ -30,7 +31,8 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^24.13.3",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "esbuild": "^0.28.2"
   },
   "engines": {
     "node": ">=20"
