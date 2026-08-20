@@ -14,11 +14,11 @@ import { rm } from "node:fs/promises";
  * node_modules stay external — they resolve by name, which was never the
  * problem, and several ship native binaries that must not be inlined.
  */
-await rm("api/index.js", { force: true });
+await rm("dist/app.js", { force: true });
 
 await build({
   entryPoints: ["src/serverless.ts"],
-  outfile: "api/index.js",
+  outfile: "dist/app.js",
   bundle: true,
   platform: "node",
   target: "node20",
@@ -31,4 +31,4 @@ await build({
   },
 });
 
-console.log("built api/index.js");
+console.log("built dist/app.js");
