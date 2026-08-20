@@ -40,7 +40,7 @@ async function main(): Promise<void> {
   });
 
   console.log(
-    `\nDemo corpus now holds ${documentCount(user.id)} document(s) ` +
+    `\nDemo corpus now holds ${await documentCount(user.id)} document(s) ` +
       `and gained ${summary.decisionsFound} decision(s).`,
   );
 
