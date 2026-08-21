@@ -309,12 +309,28 @@
 
         /* ---------------------------------------------------------- pages */
 
+        /*
+         * The product page is visible by default, with no JavaScript involved.
+         * Every page used to be hidden until the router un-hid one, which meant
+         * anything that stopped the script — an extension, a blocked inline
+         * script, a syntax error — left the visitor staring at a bare nav and
+         * footer. The site now renders something useful on its own.
+         */
         .page {
             display: none;
             padding: 64px 0 96px;
         }
 
-        .page.current {
+        #page-product {
+            display: block;
+        }
+
+        /* Once the router has successfully run, it decides what is shown. */
+        .routed .page {
+            display: none;
+        }
+
+        .routed .page.current {
             display: block;
         }
 
@@ -1802,6 +1818,10 @@ function renderRoute() {
         document.getElementById("page-" + name)
             .classList.toggle("current", name === route);
     });
+
+    // Only hand control to the router once it has actually set a page.
+    // Until this line runs, the CSS fallback keeps the product page visible.
+    document.documentElement.classList.add("routed");
 
     document.querySelectorAll(".tab").forEach(function (tab) {
         tab.classList.toggle("current", tab.dataset.route === route);
