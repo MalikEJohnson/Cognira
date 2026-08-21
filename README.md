@@ -214,7 +214,7 @@ Passes are paid in USDC on Solana:
 | Plan     | Price | Length   | Per month |
 |----------|-------|----------|-----------|
 | 1 month  | $20   | 30 days  | $20.00    |
-| 3 months | $60   | 90 days  | $20.00    |
+| 3 months | $50   | 90 days  | $16.67    |
 | 1 year   | $200  | 365 days | $16.44    |
 
 These are **fixed-length passes, not subscriptions.** Solana cannot charge a

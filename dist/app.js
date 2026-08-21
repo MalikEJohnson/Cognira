@@ -725,8 +725,8 @@ var PLANS = {
   quarter: {
     id: "quarter",
     label: "3 months",
-    priceUsd: 60,
-    amountBaseUnits: 60000000n,
+    priceUsd: 50,
+    amountBaseUnits: 50000000n,
     days: 90
   },
   year: {

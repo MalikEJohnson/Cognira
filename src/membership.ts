@@ -36,8 +36,8 @@ export const PLANS: Record<PlanId, Plan> = {
   quarter: {
     id: "quarter",
     label: "3 months",
-    priceUsd: 60,
-    amountBaseUnits: 60_000_000n,
+    priceUsd: 50,
+    amountBaseUnits: 50_000_000n,
     days: 90,
   },
   year: {

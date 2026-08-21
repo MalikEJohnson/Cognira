@@ -1265,13 +1265,27 @@
                 </div>
 
                 <div class="tier">
+                    <div class="tier-name">3 months</div>
+                    <div class="tier-cost">$50 <span>USDC</span></div>
+                    <ul>
+                        <li>Everything in monthly</li>
+                        <li>$16.67 a month</li>
+                        <li>90 days</li>
+                        <li>Save 17%</li>
+                    </ul>
+                    <button class="btn-sm btn-block" id="buyQuarter"
+                        style="margin-top:16px;"
+                        onclick="buyPlan('quarter')">Pay with Phantom</button>
+                </div>
+
+                <div class="tier">
                     <div class="tier-name">1 year</div>
                     <div class="tier-cost">$200 <span>USDC</span></div>
                     <ul>
                         <li>Everything in monthly</li>
                         <li>$16.44 a month</li>
                         <li>365 days</li>
-                        <li>Renewing early adds time</li>
+                        <li>Save 18%</li>
                     </ul>
                     <button class="btn-sm btn-block" id="buyYear"
                         style="margin-top:16px;"
@@ -1289,7 +1303,7 @@
                     approval, so nothing auto-renews and no card is stored.
                     Renewing early adds time rather than replacing it.
                 </span>
-                <strong id="quarterNote">3 months, $60 →</strong>
+                <strong>Cancel nothing — passes simply end.</strong>
             </div>
 
         </div>
@@ -2055,7 +2069,7 @@ async function loadPlans() {
 
     if (data.enabled) return;
 
-    ["buyMonth", "buyYear"].forEach(function (id) {
+    ["buyMonth", "buyQuarter", "buyYear"].forEach(function (id) {
         const button = document.getElementById(id);
         if (!button) return;
         button.disabled = true;
