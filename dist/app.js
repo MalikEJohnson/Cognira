@@ -948,7 +948,9 @@ import { createHash as createHash3 } from "node:crypto";
 var DEMO_WALLET = "demo";
 var WINDOW_MS = 60 * 60 * 1e3;
 function questionsPerHour() {
-  const configured = Number(process.env.DEMO_QUESTIONS_PER_HOUR);
+  const raw = process.env.DEMO_QUESTIONS_PER_HOUR?.trim();
+  if (!raw) return 5;
+  const configured = Number(raw);
   return Number.isFinite(configured) && configured >= 0 ? configured : 5;
 }
 async function demoUser() {
@@ -959,7 +961,7 @@ async function demoIsReady() {
   return await documentCount(user.id) > 0;
 }
 function demoClientKey(ip, userAgent) {
-  const salt = process.env.DEMO_SALT ?? "cognira-demo";
+  const salt = process.env.DEMO_SALT?.trim() || "cognira-demo";
   return createHash3("sha256").update(`${salt}:${ip ?? "unknown"}:${userAgent ?? ""}`).digest("hex").slice(0, 32);
 }
 async function checkDemoQuota(client3) {

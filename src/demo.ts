@@ -18,7 +18,13 @@ export const DEMO_WALLET = "demo";
 const WINDOW_MS = 60 * 60 * 1000;
 
 function questionsPerHour(): number {
-  const configured = Number(process.env.DEMO_QUESTIONS_PER_HOUR);
+  // Number("") is 0, not NaN — so a variable declared in a hosting dashboard
+  // but left blank silently set the limit to zero and locked everyone out of
+  // the demo. Blank has to mean "unset", not "none allowed".
+  const raw = process.env.DEMO_QUESTIONS_PER_HOUR?.trim();
+  if (!raw) return 5;
+
+  const configured = Number(raw);
   return Number.isFinite(configured) && configured >= 0 ? configured : 5;
 }
 
@@ -36,7 +42,7 @@ export async function demoIsReady(): Promise<boolean> {
  * per deployment, so the stored value is not reversible into an address.
  */
 export function demoClientKey(ip: string | undefined, userAgent: string | undefined): string {
-  const salt = process.env.DEMO_SALT ?? "cognira-demo";
+  const salt = process.env.DEMO_SALT?.trim() || "cognira-demo";
   return createHash("sha256")
     .update(`${salt}:${ip ?? "unknown"}:${userAgent ?? ""}`)
     .digest("hex")
