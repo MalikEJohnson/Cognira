@@ -321,15 +321,18 @@
             padding: 64px 0 96px;
         }
 
-        #page-product {
+        /*
+         * Scoped to :not(.routed) deliberately. An unscoped #page-product is an
+         * ID selector, so it outranks every class rule that tries to hide it —
+         * the product page stayed on screen underneath whichever tab you picked,
+         * and since the router scrolls to the top on a route change, switching
+         * tabs looked like it did nothing at all.
+         */
+        html:not(.routed) #page-product {
             display: block;
         }
 
         /* Once the router has successfully run, it decides what is shown. */
-        .routed .page {
-            display: none;
-        }
-
         .routed .page.current {
             display: block;
         }
